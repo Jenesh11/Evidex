@@ -1,0 +1,33 @@
+  const handleRestockDecision = async () => {
+    try {
+      // Database handler will automatically restore inventory atomically
+      await window.electronAPI.returns.update(selectedReturn.id, {
+        status: 'APPROVED',
+        restock_status: restockDecision,
+        stock_restored: true,
+        inspection_notes: restockNotes || selectedReturn.inspection_notes,
+      });
+
+      // Log approval
+      if (window.electronAPI?.audit) {
+        await window.electronAPI.audit.addLog({
+          action: 'RETURN_APPROVED',
+          entity_type: 'RETURN',
+          entity_id: selectedReturn.id,
+          details: JSON.stringify({
+            order_number: selectedReturn.order_number,
+            restock_decision: restockDecision,
+            notes: restockNotes,
+          }),
+        });
+      }
+
+      alert('Return approved and inventory adjusted');
+      setShowRestockDialog(false);
+      loadReturns();
+      setShowDialog(false);
+    } catch (error) {
+      console.error('Error processing restock:', error);
+      alert(`Failed to process inventory adjustment: ${error.message}`);
+    }
+  };

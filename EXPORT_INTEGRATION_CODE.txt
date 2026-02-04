@@ -1,0 +1,99 @@
+// Add this function after handleRestockDecision and before getStatusColor in Returns.jsx
+
+const handleExportEvidence = async () => {
+    try {
+        // Check permissions
+        if (!['ADMIN', 'MANAGER'].includes(user?.role)) {
+            alert('Access denied - insufficient permissions. Only ADMIN and MANAGER roles can export evidence.');
+            return;
+        }
+
+        // Check if video exists
+        if (!videos || videos.length === 0) {
+            alert('Cannot export - no video evidence found for this order.');
+            return;
+        }
+
+        setIsExporting(true);
+
+        console.log('[Export] Starting evidence export for order:', selectedReturn.order_id);
+
+        // Call IPC to get evidence data
+        const evidenceData = await window.electronAPI.export.generateEvidence(
+            selectedReturn.order_id,
+            selectedReturn.id
+        );
+
+        console.log('[Export] Evidence data received');
+
+        // Create ZIP structure
+        const zip = new JSZip();
+        const folderName = `ORD-${evidenceData.orderNumber}_EVIDENCE`;
+        const folder = zip.folder(folderName);
+
+        // Add video to ZIP
+        const videoFolder = folder.folder('video');
+        const videoBuffer = new Uint8Array(evidenceData.videoBuffer);
+        videoFolder.file('packing.mp4', videoBuffer);
+
+        console.log('[Export] Video added to ZIP');
+
+        // Generate PDF summary
+        try {
+            const pdfDoc = generateEvidencePDF(evidenceData);
+            const pdfBlob = pdfDoc.output('blob');
+            folder.file('evidence_summary.pdf', pdfBlob);
+            console.log('[Export] PDF summary generated');
+        } catch (pdfError) {
+            console.warn('[Export] PDF generation failed, using JSON fallback:', pdfError);
+            // Fallback to JSON if PDF fails
+            const jsonContent = generateEvidenceJSON(evidenceData);
+            folder.file('evidence_summary.json', jsonContent);
+            console.log('[Export] JSON summary generated as fallback');
+        }
+
+        // Create photos folder (placeholder for future use)
+        folder.folder('photos');
+
+        console.log('[Export] Generating ZIP file...');
+
+        // Generate and download ZIP
+        const blob = await zip.generateAsync({ type: 'blob' });
+
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${folderName}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log('[Export] Evidence exported successfully');
+        alert('Evidence exported successfully!');
+
+    } catch (error) {
+        console.error('[Export] Error exporting evidence:', error);
+        alert(`Failed to export evidence: ${error.message}`);
+    } finally {
+        setIsExporting(false);
+    }
+};
+
+// EXPORT BUTTON CODE
+// Add this button in the video evidence section (around line 304)
+// Place it after the "Video Evidence" heading
+
+{['ADMIN', 'MANAGER'].includes(user?.role) && videos.length > 0 && (
+    <div className="mb-4">
+        <Button 
+            onClick={handleExportEvidence} 
+            disabled={isExporting}
+            className="gap-2"
+        >
+            <Download className="w-4 h-4" />
+            {isExporting ? 'Exporting...' : 'Export Evidence'}
+        </Button>
+    </div>
+)}

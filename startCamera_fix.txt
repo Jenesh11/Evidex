@@ -1,0 +1,59 @@
+    const startCamera = async () => {
+        try {
+            setCameraError('');
+            
+            // Load saved camera settings from database
+            const deviceId = await window.electronAPI.settings.get('camera_device_id');
+            const resolution = await window.electronAPI.settings.get('camera_resolution');
+            const framerate = await window.electronAPI.settings.get('camera_framerate');
+            
+            console.log('[Camera] Settings:', { deviceId, resolution, framerate });
+            
+            const constraints = {
+                video: {
+                    width: { ideal: resolution ? parseInt(resolution.split('x')[0]) : 1280 },
+                    height: { ideal: resolution ? parseInt(resolution.split('x')[1]) : 720 },
+                    frameRate: { ideal: framerate ? parseInt(framerate) : 30 }
+                },
+                audio: true
+            };
+            
+            // Use exact deviceId if saved
+            if (deviceId) {
+                constraints.video.deviceId = { exact: deviceId };
+            }
+            
+            console.log('[Camera] Constraints:', constraints);
+
+            const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+            setStream(mediaStream);
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = mediaStream;
+            }
+            
+            console.log('[Camera] Started successfully');
+        } catch (error) {
+            console.error('[Camera] Error:', error);
+            
+            // Fallback if selected device unavailable
+            if (error.name === 'OverconstrainedError' || error.name === 'NotFoundError') {
+                console.log('[Camera] Trying fallback...');
+                try {
+                    const fallbackStream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+                        audio: true
+                    });
+                    setStream(fallbackStream);
+                    if (videoRef.current) {
+                        videoRef.current.srcObject = fallbackStream;
+                    }
+                    setCameraError('Selected camera not found. Please reselect in Settings.');
+                } catch (fallbackError) {
+                    setCameraError(`Camera access failed: ${fallbackError.message}`);
+                }
+            } else {
+                setCameraError(`Camera access failed: ${error.message}`);
+            }
+        }
+    };
