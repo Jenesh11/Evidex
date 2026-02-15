@@ -1,13 +1,90 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Search, Eye, RotateCcw, PackageX } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Plus, Search, Eye, RotateCcw, PackageX,
+    Check, Clock, Package, Truck, CheckCircle2,
+    Calendar, CreditCard, User, Mail, Phone,
+    ArrowRight, ChevronRight, Hash, DollarSign
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import toast from '@/hooks/useToast';
 import { formatCurrency, formatDateTime, getStatusColor, getStatusLabel, generateOrderNumber } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+// Status Workflow Definition
+const STATUS_STEPS = [
+    { id: 'NEW', label: 'Order Placed', icon: Clock },
+    { id: 'PACKING', label: 'Processing', icon: Package },
+    { id: 'PACKED', label: 'Packed', icon: CheckCircle2 },
+    { id: 'SHIPPED', label: 'Shipped', icon: Truck },
+    { id: 'DELIVERED', label: 'Delivered', icon: Check }
+];
+
+const StatusTimeline = ({ currentStatus, onUpdateStatus }) => {
+    const currentIndex = STATUS_STEPS.findIndex(s => s.id === currentStatus);
+
+    return (
+        <div className="w-full py-10 px-8">
+            <div className="relative flex items-center justify-between w-full max-w-3xl mx-auto">
+                {/* Progress Bar Background */}
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-secondary rounded-full -z-10" />
+
+                {/* Active Progress Bar */}
+                <motion.div
+                    className="absolute left-0 top-1/2 transform -translate-y-1/2 h-1 bg-primary rounded-full -z-10"
+                    initial={{ width: '0%' }}
+                    animate={{ width: `${(currentIndex / (STATUS_STEPS.length - 1)) * 100}%` }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                />
+
+                {STATUS_STEPS.map((step, index) => {
+                    const isCompleted = index <= currentIndex;
+                    const isCurrent = index === currentIndex;
+                    const isFuture = index > currentIndex;
+                    const Icon = step.icon;
+
+                    return (
+                        <div key={step.id} className="flex flex-col items-center gap-2 relative group">
+                            <TooltipProvider>
+                                <Tooltip delayDuration={0}>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            onClick={() => onUpdateStatus(step.id)}
+                                            disabled={isCompleted && !isCurrent} // Allow clicking future steps or current step
+                                            className={`
+                                                relative z-10 w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 bg-background
+                                                ${isCompleted ? 'border-primary text-primary' : 'border-muted-foreground/30 text-muted-foreground'}
+                                                ${isCurrent ? 'ring-4 ring-primary/20 scale-110 shadow-lg shadow-primary/20' : ''}
+                                                ${!isCompleted ? 'hover:border-primary/50 hover:text-primary/70 hover:scale-105' : ''}
+                                            `}
+                                        >
+                                            <Icon className={`w-5 h-5 ${isCompleted ? 'fill-primary/10' : ''}`} />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="font-medium" sideOffset={10}>
+                                        <p>{isCurrent ? 'Current Status' : `Mark as ${step.label}`}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+
+                            <span className={`
+                                text-sm font-medium absolute -bottom-10 whitespace-nowrap transition-colors duration-300
+                                ${isCurrent ? 'text-primary font-bold scale-110' : isCompleted ? 'text-foreground' : 'text-muted-foreground'}
+                            `}>
+                                {step.label}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
 
 export default function Orders() {
     const [orders, setOrders] = useState([]);
@@ -87,8 +164,10 @@ export default function Orders() {
             loadOrders();
             setShowDialog(false);
             resetForm();
+            toast.success('Order created successfully!');
         } catch (error) {
             console.error('Error creating order:', error);
+            toast.error('Failed to create order');
         }
     };
 
@@ -140,16 +219,17 @@ export default function Orders() {
         }
     };
 
-    const updateOrderStatus = async (orderId, newStatus) => {
+    const updateOrderStatus = async (statusId) => {
+        if (!selectedOrder) return;
         try {
-            await window.electronAPI.orders.updateStatus(orderId, newStatus);
+            await window.electronAPI.orders.updateStatus(selectedOrder.id, statusId);
+            const updated = await window.electronAPI.orders.getById(selectedOrder.id);
+            setSelectedOrder(updated);
             loadOrders();
-            if (selectedOrder && selectedOrder.id === orderId) {
-                const updated = await window.electronAPI.orders.getById(orderId);
-                setSelectedOrder(updated);
-            }
+            toast.success(`Order status updated to ${getStatusLabel(statusId)}`);
         } catch (error) {
             console.error('Error updating status:', error);
+            toast.error('Failed to update status');
         }
     };
 
@@ -162,7 +242,7 @@ export default function Orders() {
 
     const handleMarkAsReturn = async () => {
         if (!returnReason) {
-            alert('Please select a reason');
+            toast.warning('Please select a reason');
             return;
         }
 
@@ -193,17 +273,15 @@ export default function Orders() {
                 });
             }
 
-            alert(`Order marked as ${returnType} successfully!`);
+            toast.success(`Order marked as ${returnType} successfully!`);
             setShowReturnDialog(false);
             setShowDetailDialog(false);
             loadOrders();
         } catch (error) {
             console.error('Error marking as return:', error);
-            alert('Failed to mark as return');
+            toast.error('Failed to mark as return');
         }
     };
-
-    const statusFlow = ['NEW', 'PACKING', 'PACKED', 'SHIPPED', 'DELIVERED'];
 
     const returnReasons = [
         'Customer requested return',
@@ -219,69 +297,78 @@ export default function Orders() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold mb-2">Orders</h1>
-                    <p className="text-muted-foreground">Manage customer orders</p>
+                    <h1 className="text-3xl font-bold mb-2 tracking-tight">Orders</h1>
+                    <p className="text-muted-foreground">Manage and track customer orders</p>
                 </div>
-                <Button size="lg" onClick={() => { resetForm(); setShowDialog(true); }}>
+                <Button size="lg" onClick={() => { resetForm(); setShowDialog(true); }} className="shadow-lg shadow-primary/20 transition-all hover:scale-105">
                     <Plus className="w-5 h-5 mr-2" />
                     New Order
                 </Button>
             </div>
 
-            <Card>
+            <Card className="border-border/50 shadow-sm">
                 <CardContent className="p-6">
                     <div className="flex items-center gap-4 mb-6">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                             <Input
-                                placeholder="Search orders by number or customer..."
+                                placeholder="Search orders by number, customer..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 h-12"
+                                className="pl-10 h-12 bg-muted/30 border-muted"
                             />
                         </div>
                     </div>
 
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Order #</TableHead>
-                                <TableHead>Customer</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredOrders.length === 0 ? (
+                    <div className="rounded-lg border overflow-hidden">
+                        <Table>
+                            <TableHeader className="bg-muted/40">
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-12">
-                                        <p className="text-muted-foreground">No orders found</p>
-                                    </TableCell>
+                                    <TableHead className="w-[180px]"><div className="flex items-center gap-2"><Hash className="w-4 h-4" /> Order #</div></TableHead>
+                                    <TableHead><div className="flex items-center gap-2"><User className="w-4 h-4" /> Customer</div></TableHead>
+                                    <TableHead><div className="flex items-center gap-2"><Calendar className="w-4 h-4" /> Date</div></TableHead>
+                                    <TableHead className="text-right"><div className="flex items-center justify-end gap-2"><DollarSign className="w-4 h-4" /> Amount</div></TableHead>
+                                    <TableHead className="w-[150px]"><div className="flex items-center gap-2"><Clock className="w-4 h-4" /> Status</div></TableHead>
+                                    <TableHead className="w-[100px] text-right">Actions</TableHead>
                                 </TableRow>
-                            ) : (
-                                filteredOrders.map((order) => (
-                                    <TableRow key={order.id}>
-                                        <TableCell className="font-mono font-semibold">{order.order_number}</TableCell>
-                                        <TableCell>{order.customer_name}</TableCell>
-                                        <TableCell className="text-muted-foreground">{formatDateTime(order.created_at)}</TableCell>
-                                        <TableCell className="text-right font-semibold">{formatCurrency(order.total_amount)}</TableCell>
-                                        <TableCell>
-                                            <Badge className={getStatusColor(order.status)}>
-                                                {getStatusLabel(order.status)}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm" onClick={() => viewOrderDetails(order.id)}>
-                                                <Eye className="w-4 h-4" />
-                                            </Button>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredOrders.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center py-16">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                                    <Search className="w-6 h-6 text-muted-foreground" />
+                                                </div>
+                                                <p className="text-muted-foreground font-medium">No orders found</p>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : (
+                                    filteredOrders.map((order) => (
+                                        <TableRow key={order.id} className="group hover:bg-muted/40 transition-colors cursor-pointer" onClick={() => viewOrderDetails(order.id)}>
+                                            <TableCell className="font-mono font-medium text-primary group-hover:text-primary/80 transition-colors">
+                                                {order.order_number}
+                                            </TableCell>
+                                            <TableCell className="font-medium">{order.customer_name}</TableCell>
+                                            <TableCell className="text-muted-foreground text-sm">{formatDateTime(order.created_at)}</TableCell>
+                                            <TableCell className="text-right font-mono font-medium">{formatCurrency(order.total_amount)}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className={`${getStatusColor(order.status)} border-0 px-3 py-1`}>
+                                                    {getStatusLabel(order.status)}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
 
@@ -290,21 +377,23 @@ export default function Orders() {
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Create New Order</DialogTitle>
-                        <DialogDescription>Fill in the order details</DialogDescription>
+                        <DialogDescription>Fill in the details to create a new customer order.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit}>
-                        <div className="space-y-4 py-4">
-                            <div className="grid grid-cols-2 gap-4">
+                        {/* ... (Existing form content kept largely same for brevity, can enhance if needed) ... */}
+                        <div className="space-y-6 py-4">
+                            <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Order Number</label>
-                                    <Input value={formData.order_number} disabled className="font-mono" />
+                                    <Input value={formData.order_number} disabled className="font-mono bg-muted/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Customer Name</label>
+                                    <label className="text-sm font-medium">Customer Name <span className="text-red-500">*</span></label>
                                     <Input
                                         required
                                         value={formData.customer_name}
                                         onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                                        placeholder="John Doe"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -313,6 +402,7 @@ export default function Orders() {
                                         type="email"
                                         value={formData.customer_email}
                                         onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
+                                        placeholder="john@example.com"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -320,52 +410,61 @@ export default function Orders() {
                                     <Input
                                         value={formData.customer_phone}
                                         onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+                                        placeholder="+1 234 567 890"
                                     />
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <label className="text-sm font-medium">Order Items</label>
-                                    <Button type="button" size="sm" onClick={addItem}>
+                                    <Button type="button" size="sm" variant="secondary" onClick={addItem}>
                                         <Plus className="w-4 h-4 mr-1" />
                                         Add Item
                                     </Button>
                                 </div>
-                                {formData.items.map((item, index) => (
-                                    <div key={index} className="flex gap-2 items-end">
-                                        <div className="flex-1">
-                                            <select
-                                                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2"
-                                                value={item.product_id}
-                                                onChange={(e) => updateItem(index, 'product_id', e.target.value)}
-                                            >
-                                                {products.map(p => (
-                                                    <option key={p.id} value={p.id}>{p.name} - {p.sku}</option>
-                                                ))}
-                                            </select>
+                                <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+                                    {formData.items.length === 0 && <p className="text-sm text-center text-muted-foreground py-2">No items added yet.</p>}
+                                    {formData.items.map((item, index) => (
+                                        <div key={index} className="flex gap-3 items-end bg-background p-3 rounded-md shadow-sm">
+                                            <div className="flex-1 space-y-1">
+                                                <label className="text-xs text-muted-foreground">Product</label>
+                                                <select
+                                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                                    value={item.product_id}
+                                                    onChange={(e) => updateItem(index, 'product_id', e.target.value)}
+                                                >
+                                                    {products.map(p => (
+                                                        <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="w-24 space-y-1">
+                                                <label className="text-xs text-muted-foreground">Qty</label>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                                                    className="h-9"
+                                                />
+                                            </div>
+                                            <div className="w-32 space-y-1">
+                                                <label className="text-xs text-muted-foreground">Price</label>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={item.price}
+                                                    onChange={(e) => updateItem(index, 'price', e.target.value)}
+                                                    className="h-9"
+                                                />
+                                            </div>
+                                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => removeItem(index)}>
+                                                <PackageX className="w-4 h-4" />
+                                            </Button>
                                         </div>
-                                        <Input
-                                            type="number"
-                                            min="1"
-                                            value={item.quantity}
-                                            onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                                            className="w-24"
-                                            placeholder="Qty"
-                                        />
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            value={item.price}
-                                            onChange={(e) => updateItem(index, 'price', e.target.value)}
-                                            className="w-32"
-                                            placeholder="Price"
-                                        />
-                                        <Button type="button" variant="destructive" size="sm" onClick={() => removeItem(index)}>
-                                            Remove
-                                        </Button>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -373,11 +472,11 @@ export default function Orders() {
                                 <Input
                                     value={formData.notes}
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    placeholder="Optional notes"
+                                    placeholder="Internal notes for this order..."
                                 />
                             </div>
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="gap-2 sm:gap-0">
                             <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
                             <Button type="submit">Create Order</Button>
                         </DialogFooter>
@@ -387,78 +486,145 @@ export default function Orders() {
 
             {/* Order Details Dialog */}
             <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Order Details</DialogTitle>
-                    </DialogHeader>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0 overflow-hidden">
                     {selectedOrder && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Order Number</p>
-                                    <p className="font-mono font-semibold">{selectedOrder.order_number}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Status</p>
-                                    <Badge className={getStatusColor(selectedOrder.status)}>
-                                        {getStatusLabel(selectedOrder.status)}
-                                    </Badge>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Customer</p>
-                                    <p className="font-medium">{selectedOrder.customer_name}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Total</p>
-                                    <p className="font-semibold text-lg">{formatCurrency(selectedOrder.total_amount)}</p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <p className="text-sm text-muted-foreground mb-2">Items</p>
-                                <div className="space-y-2">
-                                    {selectedOrder.items?.map((item, i) => (
-                                        <div key={i} className="flex justify-between p-3 bg-secondary rounded-lg">
-                                            <span>{item.product_name} ({item.sku})</span>
-                                            <span className="font-semibold">{item.quantity} × {formatCurrency(item.price)}</span>
+                        <>
+                            {/* Header Section */}
+                            <div className="p-6 bg-muted/30 border-b">
+                                <div className="flex items-start justify-between mb-6">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <h2 className="text-2xl font-bold tracking-tight font-mono">{selectedOrder.order_number}</h2>
+                                            <Badge className={`${getStatusColor(selectedOrder.status)} border-0`}>
+                                                {getStatusLabel(selectedOrder.status)}
+                                            </Badge>
                                         </div>
-                                    ))}
+                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {formatDateTime(selectedOrder.created_at)}</span>
+                                            <span className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5" /> Total: <span className="text-foreground font-semibold">{formatCurrency(selectedOrder.total_amount)}</span></span>
+                                        </div>
+                                    </div>
+                                    {['DELIVERED', 'SHIPPED', 'PACKED'].includes(selectedOrder.status) && (
+                                        <div className="flex gap-2">
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="outline" size="sm" onClick={() => openReturnDialog('RETURN')} className="border-orange-200 hover:bg-orange-50 hover:text-orange-600 dark:border-orange-900 dark:hover:bg-orange-900/20">
+                                                            <RotateCcw className="w-4 h-4 mr-2" />
+                                                            Return
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>Mark as Customer Return</p></TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="outline" size="sm" onClick={() => openReturnDialog('RTO')} className="border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-red-900 dark:hover:bg-red-900/20">
+                                                            <PackageX className="w-4 h-4 mr-2" />
+                                                            RTO
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>Mark as Return to Origin</p></TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Status Timeline */}
+                                <div className="mt-8 mb-2 px-4">
+                                    <StatusTimeline
+                                        currentStatus={selectedOrder.status}
+                                        onUpdateStatus={updateOrderStatus}
+                                    />
                                 </div>
                             </div>
 
-                            <div>
-                                <p className="text-sm text-muted-foreground mb-2">Update Status</p>
-                                <div className="flex gap-2 flex-wrap">
-                                    {statusFlow.map(status => (
-                                        <Button
-                                            key={status}
-                                            size="sm"
-                                            variant={selectedOrder.status === status ? 'default' : 'outline'}
-                                            onClick={() => updateOrderStatus(selectedOrder.id, status)}
-                                        >
-                                            {getStatusLabel(status)}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </div>
+                            <div className="p-6 grid md:grid-cols-3 gap-8">
+                                {/* Left Column: Customer & Details */}
+                                <div className="md:col-span-1 space-y-6">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Customer Details</h3>
+                                        <Card className="border-none shadow-none bg-muted/30">
+                                            <CardContent className="p-4 space-y-3">
+                                                <div className="flex items-start gap-3">
+                                                    <User className="w-4 h-4 text-primary mt-0.5" />
+                                                    <div>
+                                                        <p className="font-medium text-sm">{selectedOrder.customer_name}</p>
+                                                        <p className="text-xs text-muted-foreground">Customer</p>
+                                                    </div>
+                                                </div>
+                                                {selectedOrder.customer_email && (
+                                                    <div className="flex items-start gap-3">
+                                                        <Mail className="w-4 h-4 text-primary mt-0.5" />
+                                                        <div>
+                                                            <p className="font-medium text-sm">{selectedOrder.customer_email}</p>
+                                                            <p className="text-xs text-muted-foreground">Email</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {selectedOrder.customer_phone && (
+                                                    <div className="flex items-start gap-3">
+                                                        <Phone className="w-4 h-4 text-primary mt-0.5" />
+                                                        <div>
+                                                            <p className="font-medium text-sm">{selectedOrder.customer_phone}</p>
+                                                            <p className="text-xs text-muted-foreground">Phone</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    </div>
 
-                            {/* Return/RTO Actions */}
-                            {['DELIVERED', 'SHIPPED', 'PACKED'].includes(selectedOrder.status) && (
-                                <div className="pt-4 border-t">
-                                    <p className="text-sm text-muted-foreground mb-3">Returns & RTO</p>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" onClick={() => openReturnDialog('RETURN')}>
-                                            <RotateCcw className="w-4 h-4 mr-2" />
-                                            Mark as Return
-                                        </Button>
-                                        <Button variant="outline" onClick={() => openReturnDialog('RTO')}>
-                                            <PackageX className="w-4 h-4 mr-2" />
-                                            Mark as RTO
-                                        </Button>
+                                    {selectedOrder.notes && (
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Order Notes</h3>
+                                            <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 text-sm text-amber-900 dark:text-amber-100">
+                                                {selectedOrder.notes}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Right Column: Order Items */}
+                                <div className="md:col-span-2">
+                                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Order Items</h3>
+                                    <div className="rounded-lg border overflow-hidden">
+                                        <Table>
+                                            <TableHeader className="bg-muted/50">
+                                                <TableRow>
+                                                    <TableHead>Product</TableHead>
+                                                    <TableHead className="text-right">Qty</TableHead>
+                                                    <TableHead className="text-right">Price</TableHead>
+                                                    <TableHead className="text-right">Total</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {selectedOrder.items?.map((item, i) => (
+                                                    <TableRow key={i}>
+                                                        <TableCell>
+                                                            <div>
+                                                                <p className="font-medium">{item.product_name}</p>
+                                                                <p className="text-xs text-muted-foreground font-mono">{item.sku}</p>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">{item.quantity}</TableCell>
+                                                        <TableCell className="text-right text-muted-foreground">{formatCurrency(item.price)}</TableCell>
+                                                        <TableCell className="text-right font-medium">{formatCurrency(item.price * item.quantity)}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                                <TableRow className="bg-muted/20 font-medium">
+                                                    <TableCell colSpan={3} className="text-right">Total Amount</TableCell>
+                                                    <TableCell className="text-right text-lg">{formatCurrency(selectedOrder.total_amount)}</TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
                                     </div>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        </>
                     )}
                 </DialogContent>
             </Dialog>
@@ -467,7 +633,7 @@ export default function Orders() {
             <Dialog open={showReturnDialog} onOpenChange={setShowReturnDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Mark as {returnType}</DialogTitle>
+                        <DialogTitle>Mark as {returnType === 'RTO' ? 'Return to Origin (RTO)' : 'Customer Return'}</DialogTitle>
                         <DialogDescription>
                             This will create a return record and link the packing video evidence
                         </DialogDescription>
@@ -495,8 +661,9 @@ export default function Orders() {
                                 placeholder="Optional notes about the return..."
                             />
                         </div>
-                        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-600 dark:text-blue-400">
-                            <p><strong>Note:</strong> Packing video will be automatically linked as evidence and locked from deletion.</p>
+                        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-600 dark:text-blue-400 flex gap-2">
+                            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                            <p><strong>Heads up:</strong> Packing video will be automatically linked as evidence and locked from deletion.</p>
                         </div>
                     </div>
                     <DialogFooter>

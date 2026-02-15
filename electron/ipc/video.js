@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
-import { executeQuery, executeQueryOne, executeUpdate, getDataPath } from '../../src/database/db.js';
+import { executeQuery, executeQueryOne, executeUpdate } from '../../src/database/db.js';
+import { getVideoStorageRoot } from './files.js';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -30,11 +31,13 @@ export const setupVideoHandlers = () => {
     ipcMain.handle('video:save', async (event, videoData) => {
         try {
             const { orderNumber, buffer, recordedBy, duration } = videoData;
-            const dataPath = getDataPath();
+
+            // Get configured video storage root (default or custom)
+            const videoRoot = getVideoStorageRoot();
 
             // Create date-based folder
             const today = new Date().toISOString().split('T')[0];
-            const videoDir = path.join(dataPath, 'videos', today);
+            const videoDir = path.join(videoRoot, today);
 
             if (!fs.existsSync(videoDir)) {
                 fs.mkdirSync(videoDir, { recursive: true });

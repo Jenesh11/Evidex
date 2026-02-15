@@ -109,6 +109,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // File operations
     files: {
         selectFile: () => ipcRenderer.invoke('files:selectFile'),
+        selectDirectory: () => ipcRenderer.invoke('files:selectDirectory'), // Added this
         saveFile: (data, filename) => ipcRenderer.invoke('files:saveFile', data, filename),
         getDataPath: () => ipcRenderer.invoke('files:getDataPath'),
     },
@@ -163,6 +164,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
         getStats: () => ipcRenderer.invoke('backup:getStats'),
         getSettings: () => ipcRenderer.invoke('backup:getSettings'),
         updateSettings: (settings) => ipcRenderer.invoke('backup:updateSettings', settings),
+    },
+
+    // Auto-Update
+    updates: {
+        onUpdateAvailable: (callback) => {
+            ipcRenderer.on('update-available', (event, info) => callback(info));
+        },
+        onUpdateError: (callback) => {
+            ipcRenderer.on('update-error', (event, error) => callback(error));
+        },
+        downloadUpdate: () => ipcRenderer.send('download-update'),
+        installUpdate: () => ipcRenderer.send('install-update'),
+        removeUpdateListener: () => {
+            ipcRenderer.removeAllListeners('update-available');
+            ipcRenderer.removeAllListeners('update-error');
+        }
+    },
+
+    // Window controls
+    window: {
+        minimize: () => ipcRenderer.send('window:minimize'),
+        maximize: () => ipcRenderer.send('window:maximize'),
+        close: () => ipcRenderer.send('window:close'),
     },
 });
 

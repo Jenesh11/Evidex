@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Search, AlertCircle, CheckCircle, XCircle, Play, Download } from 'lucide-react';
+import { Search, AlertCircle, CheckCircle, XCircle, Play, Download, Lock, FileText, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDateTime } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import JSZip from 'jszip';
 import { generateEvidencePDF, generateEvidenceJSON } from '@/utils/evidencePDF';
 import { PLANS, hasFeature } from '@/config/plans';
 import { UpgradeButton } from '@/components/UpgradePrompt';
+import toast from '@/hooks/useToast';
 
 export default function Returns() {
-    const { user, activePlan } = useAuth();
+    const { user, profile, effectivePlan } = useAuth();
     const [returns, setReturns] = useState([]);
     const [filteredReturns, setFilteredReturns] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -25,10 +27,17 @@ export default function Returns() {
     const [restockDecision, setRestockDecision] = useState('YES');
     const [restockNotes, setRestockNotes] = useState('');
     const [isExporting, setIsExporting] = useState(false);
+    const [showExportSuccess, setShowExportSuccess] = useState(false);
     const [packingEvidence, setPackingEvidence] = useState(null);
 
-    const currentPlan = activePlan?.startsWith('PRO') ? PLANS.PRO :
-        activePlan === 'ENTERPRISE' ? PLANS.ENTERPRISE : PLANS.STARTER;
+    const currentPlan = effectivePlan?.startsWith('PRO') ? PLANS.PRO :
+        effectivePlan === 'ENTERPRISE' ? PLANS.ENTERPRISE : PLANS.STARTER;
+
+    // Helper to check role permissions
+    const hasRole = (allowedRoles) => {
+        const role = profile?.role || user?.role; // Fallback to user role if profile not loaded
+        return allowedRoles.includes(role);
+    };
 
     useEffect(() => {
         loadReturns();
@@ -134,12 +143,12 @@ export default function Returns() {
                 });
             }
 
-            alert(`Status updated to ${newStatus}`);
+            toast.success(`Status updated to ${newStatus}`);
             loadReturns();
             setShowDialog(false);
         } catch (error) {
             console.error('Error updating status:', error);
-            alert('Failed to update status');
+            toast.error('Failed to update status');
         }
     };
 
@@ -168,27 +177,27 @@ export default function Returns() {
                 });
             }
 
-            alert('Return approved and inventory adjusted');
+            toast.success('Return approved and inventory adjusted');
             setShowRestockDialog(false);
             loadReturns();
             setShowDialog(false);
         } catch (error) {
             console.error('Error processing restock:', error);
-            alert(`Failed to process inventory adjustment: ${error.message}`);
+            toast.error(`Failed to process inventory adjustment: ${error.message}`);
         }
     };
 
     const handleExportEvidence = async () => {
         try {
             // Check permissions
-            if (!['ADMIN', 'MANAGER'].includes(user?.role)) {
-                alert('Access denied - insufficient permissions. Only ADMIN and MANAGER roles can export evidence.');
+            if (!hasRole(['ADMIN', 'MANAGER'])) {
+                toast.error('Access denied - insufficient permissions. Only ADMIN and MANAGER roles can export evidence.');
                 return;
             }
 
             // Check if video exists
             if (!videos || videos.length === 0) {
-                alert('Cannot export - no video evidence found for this order.');
+                toast.warning('Cannot export - no video evidence found for this order.');
                 return;
             }
 
@@ -249,11 +258,12 @@ export default function Returns() {
             URL.revokeObjectURL(url);
 
             console.log('[Export] Evidence exported successfully');
-            alert('Evidence exported successfully!');
+            setShowExportSuccess(true);
+            toast.success('Evidence exported successfully!');
 
         } catch (error) {
             console.error('[Export] Error exporting evidence:', error);
-            alert(`Failed to export evidence: ${error.message}`);
+            toast.error(`Failed to export evidence: ${error.message}`);
         } finally {
             setIsExporting(false);
         }
@@ -311,22 +321,23 @@ export default function Returns() {
                                 </TableRow>
                             ) : (
                                 filteredReturns.map((returnItem) => (
-                                    <TableRow key={returnItem.id} className="cursor-pointer" onClick={() => viewReturnDetails(returnItem)}>
-                                        <TableCell className="font-mono font-semibold">{returnItem.order_number}</TableCell>
+                                    <TableRow key={returnItem.id} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => viewReturnDetails(returnItem)}>
+                                        <TableCell className="font-mono font-semibold text-primary">{returnItem.order_number}</TableCell>
                                         <TableCell>
-                                            <Badge className={returnItem.return_type === 'RTO' ? 'status-rto' : 'status-return'}>
+                                            <Badge variant="outline" className={returnItem.return_type === 'RTO' ? 'status-rto' : 'status-return'}>
                                                 {returnItem.return_type}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">{returnItem.reason || 'N/A'}</TableCell>
                                         <TableCell>{formatDateTime(returnItem.created_at)}</TableCell>
                                         <TableCell>
-                                            <Badge className={getStatusColor(returnItem.status)}>{returnItem.status}</Badge>
+                                            <Badge variant="outline" className={getStatusColor(returnItem.status)}>{returnItem.status}</Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <button className="text-primary hover:underline text-sm font-medium">
+                                            <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 gap-2">
+                                                <Play className="w-4 h-4" />
                                                 View Evidence
-                                            </button>
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -343,258 +354,250 @@ export default function Returns() {
                         <DialogTitle>Return Evidence</DialogTitle>
                     </DialogHeader>
                     {selectedReturn && (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-8 py-4">
+                            {/* Order Info Grid */}
+                            <div className="grid grid-cols-4 gap-6 p-6 rounded-xl bg-muted/40 border">
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Order Number</p>
-                                    <p className="font-mono font-semibold">{selectedReturn.order_number}</p>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Order Number</p>
+                                    <p className="font-mono font-bold text-lg">{selectedReturn.order_number}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Return Type</p>
-                                    <Badge className={selectedReturn.return_type === 'RTO' ? 'status-rto' : 'status-return'}>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Return Type</p>
+                                    <Badge variant="outline" className={selectedReturn.return_type === 'RTO' ? 'status-rto' : 'status-return'}>
                                         {selectedReturn.return_type}
                                     </Badge>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Reason</p>
-                                    <p>{selectedReturn.reason || 'N/A'}</p>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Reason</p>
+                                    <p className="font-medium">{selectedReturn.reason || 'N/A'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Status</p>
-                                    <Badge className={getStatusColor(selectedReturn.status)}>{selectedReturn.status}</Badge>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Status</p>
+                                    <Badge variant="outline" className={getStatusColor(selectedReturn.status)}>{selectedReturn.status}</Badge>
                                 </div>
                             </div>
 
+                            {/* Status Workflow Actions */}
+                            {selectedReturn.status !== 'COMPLETED' && selectedReturn.status !== 'REJECTED' && (
+                                <div className="p-6 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="text-base font-semibold mb-1">Update Status</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                Current Stage: <span className="font-medium text-foreground">{selectedReturn.status}</span>
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            {getNextStatus(selectedReturn.status, selectedReturn.return_type) && (
+                                                <Button
+                                                    onClick={() => updateReturnStatus(getNextStatus(selectedReturn.status, selectedReturn.return_type))}
+                                                    className="gap-2"
+                                                >
+                                                    Move to {getNextStatus(selectedReturn.status, selectedReturn.return_type)}
+                                                    <ChevronRight className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                            {canReject(selectedReturn.status, selectedReturn.return_type) && (
+                                                <Button variant="destructive" onClick={() => updateReturnStatus('REJECTED')}>
+                                                    Reject Return
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Inspection Notes */}
                             {selectedReturn.inspection_notes && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground mb-2">Inspection Notes</p>
-                                    <div className="p-4 rounded-lg bg-secondary">
+                                    <h4 className="font-semibold mb-3">Inspection Notes</h4>
+                                    <div className="p-4 rounded-lg bg-secondary/50 text-sm">
                                         <p>{selectedReturn.inspection_notes}</p>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Status Workflow */}
-                            {selectedReturn.status !== 'COMPLETED' && selectedReturn.status !== 'REJECTED' && (
-                                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                                    <p className="text-sm font-medium mb-3">Update Status</p>
-                                    <div className="flex gap-2">
-                                        {getNextStatus(selectedReturn.status, selectedReturn.return_type) && (
-                                            <Button onClick={() => updateReturnStatus(getNextStatus(selectedReturn.status, selectedReturn.return_type))}>
-                                                Move to {getNextStatus(selectedReturn.status, selectedReturn.return_type)}
-                                            </Button>
-                                        )}
-                                        {canReject(selectedReturn.status, selectedReturn.return_type) && (
-                                            <Button variant="destructive" onClick={() => updateReturnStatus('REJECTED')}>
-                                                Reject
-                                            </Button>
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        {selectedReturn.return_type === 'RETURN'
-                                            ? 'Workflow: PENDING → APPROVED → COMPLETED'
-                                            : 'Workflow: PENDING → INSPECTED → APPROVED/REJECTED → COMPLETED'}
-                                    </p>
-                                </div>
-                            )}
+                            <div className="border-t pt-6"></div>
 
-                            {/* Packing Checklist */}
-                            {packingEvidence && (
-                                <div className="p-4 rounded-lg bg-secondary/50 mb-6">
-                                    <h4 className="font-semibold mb-3">Packing Checklist</h4>
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            {packingEvidence.checklist_product_correct ?
-                                                <CheckCircle className="w-4 h-4 text-green-500" /> :
-                                                <XCircle className="w-4 h-4 text-red-500" />
-                                            }
-                                            <span>Correct product packed</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {packingEvidence.checklist_quantity_correct ?
-                                                <CheckCircle className="w-4 h-4 text-green-500" /> :
-                                                <XCircle className="w-4 h-4 text-red-500" />
-                                            }
-                                            <span>Correct quantity packed</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {packingEvidence.checklist_sealing_done ?
-                                                <CheckCircle className="w-4 h-4 text-green-500" /> :
-                                                <XCircle className="w-4 h-4 text-red-500" />
-                                            }
-                                            <span>Proper sealing done</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Packing Photos */}
-                            {packingEvidence && (packingEvidence.photo_before_seal || packingEvidence.photo_after_seal) && (
-                                <div className="mb-6">
-                                    <h4 className="font-semibold mb-3">Packing Photos</h4>
-                                    {console.log('[Photos] Before:', packingEvidence.photo_before_seal, 'After:', packingEvidence.photo_after_seal)}
-                                    <div className="flex gap-4">
-                                        {packingEvidence.photo_before_seal && (
-                                            <div>
-                                                <p className="text-sm text-muted-foreground mb-2">Before Seal</p>
-                                                <img
-                                                    src={`file:///${packingEvidence.photo_before_seal.replace(/\\/g, '/')}`}
-                                                    alt="Before seal"
-                                                    className="w-48 h-48 object-cover rounded border"
-                                                    onError={(e) => {
-                                                        console.error('[Photo] Before seal error:', packingEvidence.photo_before_seal);
-                                                        console.error('[Photo] URL:', e.target.src);
-                                                    }}
-                                                    onLoad={() => console.log('[Photo] Before seal loaded')}
-                                                />
-                                            </div>
-                                        )}
-                                        {packingEvidence.photo_after_seal && (
-                                            <div>
-                                                <p className="text-sm text-muted-foreground mb-2">After Seal</p>
-                                                <img
-                                                    src={`file:///${packingEvidence.photo_after_seal.replace(/\\/g, '/')}`}
-                                                    alt="After seal"
-                                                    className="w-48 h-48 object-cover rounded border"
-                                                    onError={(e) => {
-                                                        console.error('[Photo] After seal error:', packingEvidence.photo_after_seal);
-                                                        console.error('[Photo] URL:', e.target.src);
-                                                    }}
-                                                    onLoad={() => console.log('[Photo] After seal loaded')}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
+                            {/* Video Evidence Section */}
                             <div>
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-semibold">Video Evidence</h3>
-                                    {['ADMIN', 'MANAGER'].includes(user?.role) && videos.length > 0 && (
+                                <div className="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                                            <Play className="w-5 h-5 text-primary" />
+                                            Video Evidence
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground mt-1">Review packing footage for verification</p>
+                                    </div>
+
+                                    {/* EXPORT BUTTON LOGIC START */}
+                                    {videos.length > 0 && (
                                         hasFeature(currentPlan, 'evidence_export') ? (
-                                            <Button
-                                                onClick={handleExportEvidence}
-                                                disabled={isExporting}
-                                                className="gap-2"
-                                                size="sm"
-                                            >
-                                                <Download className="w-4 h-4" />
-                                                {isExporting ? 'Exporting...' : 'Export Evidence'}
-                                            </Button>
+                                            /* Pro Plan Check */
+                                            hasRole(['ADMIN', 'MANAGER']) ? (
+                                                /* Admin/Manager: Enabled */
+                                                <Button
+                                                    onClick={handleExportEvidence}
+                                                    disabled={isExporting}
+                                                    className="gap-2"
+                                                    size="sm"
+                                                    variant="outline"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                    {isExporting ? 'Exporting...' : 'Export Evidence'}
+                                                </Button>
+                                            ) : (
+                                                /* Staff: Disabled (Locked) */
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <div className="cursor-not-allowed">
+                                                                <Button
+                                                                    disabled
+                                                                    className="gap-2 opacity-70"
+                                                                    size="sm"
+                                                                    variant="secondary"
+                                                                >
+                                                                    <Lock className="w-3 h-3" />
+                                                                    Export Evidence
+                                                                </Button>
+                                                            </div>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Restricted to Admin/Manager accounts</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )
                                         ) : (
+                                            /* Non-Pro Plan: Upgrade */
                                             <UpgradeButton feature="Evidence Export" requiredPlan="PRO">
                                                 <Download className="w-4 h-4" />
                                                 Export Evidence
                                             </UpgradeButton>
                                         )
                                     )}
+                                    {/* EXPORT BUTTON LOGIC END */}
                                 </div>
-                                {videos.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground text-center py-8">No videos found for this order</p>
-                                ) : (
-                                    <div className="space-y-6">
-                                        {videos.map((video) => (
-                                            <Card key={video.id}>
-                                                <CardHeader>
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <CardTitle className="text-base">
-                                                                Recorded: {formatDateTime(video.recorded_at)}
-                                                            </CardTitle>
-                                                            <CardDescription>
-                                                                Duration: {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')} •
-                                                                Size: {(video.file_size / 1024 / 1024).toFixed(2)} MB
-                                                            </CardDescription>
-                                                        </div>
-                                                        <div>
-                                                            {video.verification?.valid ? (
-                                                                <div className="flex items-center gap-2 text-green-500">
-                                                                    <CheckCircle className="w-5 h-5" />
-                                                                    <span className="font-semibold">Valid</span>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center gap-2 text-red-500">
-                                                                    <XCircle className="w-5 h-5" />
-                                                                    <span className="font-semibold">Invalid</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <div className="space-y-4">
-                                                        {/* Embedded Video Player */}
-                                                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                                                            {video.verification?.valid ? (
-                                                                <video
-                                                                    src={getVideoUrl(video.file_path)}
-                                                                    controls
-                                                                    className="w-full h-full"
-                                                                    preload="metadata"
-                                                                    onError={(e) => {
-                                                                        console.error('[Video] Load error:', e.target.error, 'Path:', video.file_path);
-                                                                        console.error('[Video] URL:', getVideoUrl(video.file_path));
-                                                                    }}
-                                                                    onLoadedMetadata={(e) => {
-                                                                        console.log('[Video] Metadata loaded:', e.target.duration, 'seconds');
-                                                                    }}
-                                                                    onCanPlay={() => {
-                                                                        console.log('[Video] Can play');
-                                                                    }}
-                                                                >
-                                                                    Your browser does not support video playback.
-                                                                </video>
-                                                            ) : (
-                                                                <div className="absolute inset-0 flex items-center justify-center bg-red-500/10">
-                                                                    <div className="text-center px-4">
-                                                                        <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                                                                        <p className="text-red-600 dark:text-red-400 font-semibold mb-2">
-                                                                            Video Playback Disabled
-                                                                        </p>
-                                                                        <p className="text-sm text-red-600 dark:text-red-400">
-                                                                            This video has been tampered with and cannot be played
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
 
-                                                        {/* Video Metadata */}
-                                                        <div className="space-y-3">
-                                                            <div className="p-3 rounded-lg bg-secondary/50 font-mono text-xs">
-                                                                <p className="text-muted-foreground mb-1">File Hash (SHA-256):</p>
-                                                                <p className="break-all">{video.file_hash}</p>
+                                {videos.length === 0 ? (
+                                    <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed">
+                                        <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+                                        <p className="text-muted-foreground">No video evidence found for this order</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-6">
+                                        {videos.map((video) => (
+                                            <Card key={video.id} className="overflow-hidden border-2 border-border/50">
+                                                <div className="grid md:grid-cols-3">
+                                                    {/* Video Player Column */}
+                                                    <div className="md:col-span-2 bg-black relative aspect-video group">
+                                                        {video.verification?.valid ? (
+                                                            <video
+                                                                src={getVideoUrl(video.file_path)}
+                                                                controls
+                                                                className="w-full h-full object-contain"
+                                                                preload="metadata"
+                                                            >
+                                                                Your browser does not support video playback.
+                                                            </video>
+                                                        ) : (
+                                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-950/20 backdrop-blur-sm p-6 text-center">
+                                                                <AlertCircle className="w-12 h-12 text-red-500 mb-3" />
+                                                                <h4 className="text-lg font-bold text-red-500 mb-1">Playback Disabled</h4>
+                                                                <p className="text-red-400 text-sm">Security verification failed. This video may have been tempered with.</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Metadata Column */}
+                                                    <div className="p-6 bg-muted/10 flex flex-col justify-between">
+                                                        <div className="space-y-6">
+                                                            <div>
+                                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Recorded At</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                                                    <span className="font-mono font-medium">{formatDateTime(video.recorded_at)}</span>
+                                                                </div>
                                                             </div>
 
-                                                            {!video.verification?.valid && (
-                                                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400">
-                                                                    <div className="flex items-start gap-2">
-                                                                        <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                                                                        <div>
-                                                                            <p className="font-semibold">Tamper Detected</p>
-                                                                            <p className="text-sm mt-1">{video.verification?.reason}</p>
-                                                                        </div>
-                                                                    </div>
+                                                            <div>
+                                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Details</p>
+                                                                <div className="space-y-1 text-sm">
+                                                                    <p>Duration: <span className="text-foreground font-mono">{Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}</span></p>
+                                                                    <p>Size: <span className="text-foreground font-mono">{(video.file_size / 1024 / 1024).toFixed(2)} MB</span></p>
                                                                 </div>
-                                                            )}
+                                                            </div>
 
-                                                            <details className="text-sm">
-                                                                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                                                                    Show file path
-                                                                </summary>
-                                                                <p className="mt-2 p-2 rounded bg-secondary font-mono text-xs break-all">
-                                                                    {video.file_path}
-                                                                </p>
-                                                            </details>
+                                                            <div>
+                                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Integrity Status</p>
+                                                                {video.verification?.valid ? (
+                                                                    <div className="flex items-center gap-2 text-green-500 bg-green-500/10 px-3 py-2 rounded-lg border border-green-500/20">
+                                                                        <CheckCircle className="w-4 h-4" />
+                                                                        <span className="text-sm font-semibold">Verified Valid</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex items-center gap-2 text-red-500 bg-red-500/10 px-3 py-2 rounded-lg border border-red-500/20">
+                                                                        <XCircle className="w-4 h-4" />
+                                                                        <span className="text-sm font-semibold">Verification Failed</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="pt-6 border-t mt-auto">
+                                                            <div className="bg-background rounded p-3 text-xs font-mono text-muted-foreground break-all border overflow-hidden">
+                                                                <span className="opacity-50 select-none mr-2">SHA-256:</span>
+                                                                {video.file_hash?.substring(0, 16)}...
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </CardContent>
+                                                </div>
                                             </Card>
                                         ))}
                                     </div>
                                 )}
                             </div>
+
+                            {/* Packing Checklist Summary */}
+                            {packingEvidence && (
+                                <div className="mt-8 pt-8 border-t">
+                                    <h4 className="font-semibold mb-4 flex items-center gap-2">
+                                        <FileText className="w-5 h-5 text-primary" />
+                                        Packing Checklist Reference
+                                    </h4>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className={`p-4 rounded-lg border ${packingEvidence.checklist_product_correct ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                                            <div className="flex items-center gap-3">
+                                                {packingEvidence.checklist_product_correct ?
+                                                    <CheckCircle className="w-5 h-5 text-green-500" /> :
+                                                    <XCircle className="w-5 h-5 text-red-500" />
+                                                }
+                                                <span className="text-sm font-medium">Product Correct</span>
+                                            </div>
+                                        </div>
+                                        <div className={`p-4 rounded-lg border ${packingEvidence.checklist_quantity_correct ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                                            <div className="flex items-center gap-3">
+                                                {packingEvidence.checklist_quantity_correct ?
+                                                    <CheckCircle className="w-5 h-5 text-green-500" /> :
+                                                    <XCircle className="w-5 h-5 text-red-500" />
+                                                }
+                                                <span className="text-sm font-medium">Quantity Correct</span>
+                                            </div>
+                                        </div>
+                                        <div className={`p-4 rounded-lg border ${packingEvidence.checklist_sealing_done ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                                            <div className="flex items-center gap-3">
+                                                {packingEvidence.checklist_sealing_done ?
+                                                    <CheckCircle className="w-5 h-5 text-green-500" /> :
+                                                    <XCircle className="w-5 h-5 text-red-500" />
+                                                }
+                                                <span className="text-sm font-medium">Sealing Verified</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
                     )}
                 </DialogContent>
@@ -637,6 +640,27 @@ export default function Returns() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowRestockDialog(false)}>Cancel</Button>
                         <Button onClick={handleRestockDecision}>Confirm & Approve</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* Export Success Dialog */}
+            <Dialog open={showExportSuccess} onOpenChange={setShowExportSuccess}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-center flex flex-col items-center gap-4 py-4">
+                            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
+                                <CheckCircle className="w-10 h-10 text-green-500" />
+                            </div>
+                            <span className="text-xl">Evidence Exported!</span>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="text-center pb-6 text-muted-foreground px-4">
+                        The evidence package has been successfully compiled and downloaded to your computer.
+                    </div>
+                    <DialogFooter className="sm:justify-center">
+                        <Button onClick={() => setShowExportSuccess(false)} className="w-full sm:w-auto min-w-[150px]">
+                            Done
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

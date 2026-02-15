@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Edit, Trash2, Users as UsersIcon } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Search, Edit, Trash2, Users as UsersIcon, UserCog, UserCheck, Shield, Key, MoreVertical } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDateTime } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function Staff() {
     const { hasPermission } = useAuth();
@@ -46,7 +47,7 @@ export default function Staff() {
         try {
             const data = await window.electronAPI.staff.getAll();
             setStaff(data);
-            setFilteredStaff(data);
+            if (!searchQuery) setFilteredStaff(data);
         } catch (error) {
             console.error('Error loading staff:', error);
         }
@@ -172,15 +173,27 @@ export default function Staff() {
         });
     };
 
+    // Helper for initials
+    const getInitials = (name) => {
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    };
+
     // Check if user has permission to manage staff
     if (!hasPermission('manage_staff')) {
         return (
             <div className="flex items-center justify-center h-full">
-                <Card className="max-w-md">
+                <Card className="max-w-md border-destructive/20 bg-destructive/5">
                     <CardContent className="p-8 text-center">
-                        <UsersIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-                        <p className="text-muted-foreground">You don't have permission to manage staff.</p>
+                        <div className="bg-destructive/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Shield className="w-8 h-8 text-destructive" />
+                        </div>
+                        <h2 className="text-2xl font-bold mb-2 text-destructive">Access Denied</h2>
+                        <p className="text-muted-foreground">You don't have permission to manage staff settings.</p>
                     </CardContent>
                 </Card>
             </div>
@@ -191,7 +204,7 @@ export default function Staff() {
     if (activePlan === 'STARTER') {
         return (
             <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] space-y-6 text-center px-4">
-                <div className="bg-primary/10 p-6 rounded-full">
+                <div className="bg-primary/10 p-6 rounded-full ring-4 ring-primary/5">
                     <UsersIcon className="w-16 h-16 text-primary" />
                 </div>
                 <div className="max-w-md space-y-2">
@@ -201,26 +214,32 @@ export default function Staff() {
                     </p>
                 </div>
 
-                <Card className="w-full max-w-sm border-2 border-primary/20 shadow-lg">
+                <Card className="w-full max-w-sm border-2 border-primary/20 shadow-xl bg-card/50 backdrop-blur">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg">Pro Plan Feature</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <ul className="text-sm text-left space-y-2 mb-4">
-                            <li className="flex items-center gap-2">
-                                <Badge variant="outline" className="h-5 w-5 p-0 flex items-center justify-center rounded-full bg-green-500/10 border-green-500/50 text-green-600">✓</Badge>
-                                <span>Unlimited Staff Members</span>
+                        <ul className="text-sm text-left space-y-3 mb-4">
+                            <li className="flex items-center gap-3">
+                                <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center">
+                                    <span className="text-green-600 text-xs font-bold">✓</span>
+                                </div>
+                                <span className="font-medium">Unlimited Staff Members</span>
                             </li>
-                            <li className="flex items-center gap-2">
-                                <Badge variant="outline" className="h-5 w-5 p-0 flex items-center justify-center rounded-full bg-green-500/10 border-green-500/50 text-green-600">✓</Badge>
-                                <span>Role-Based Access Control</span>
+                            <li className="flex items-center gap-3">
+                                <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center">
+                                    <span className="text-green-600 text-xs font-bold">✓</span>
+                                </div>
+                                <span className="font-medium">Role-Based Access Control</span>
                             </li>
-                            <li className="flex items-center gap-2">
-                                <Badge variant="outline" className="h-5 w-5 p-0 flex items-center justify-center rounded-full bg-green-500/10 border-green-500/50 text-green-600">✓</Badge>
-                                <span>Staff Activity Logs</span>
+                            <li className="flex items-center gap-3">
+                                <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center">
+                                    <span className="text-green-600 text-xs font-bold">✓</span>
+                                </div>
+                                <span className="font-medium">Staff Activity Logs</span>
                             </li>
                         </ul>
-                        <Button className="w-full" asChild>
+                        <Button className="w-full shadow-md" size="lg" asChild>
                             <a href="/pricing">Upgrade to Pro</a>
                         </Button>
                     </CardContent>
@@ -229,117 +248,189 @@ export default function Staff() {
         );
     }
 
+    // Stats
+    const activeStaffCount = staff.filter(s => s.is_active).length;
+    const adminCount = staff.filter(s => s.role === 'ADMIN').length;
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="space-y-8 pb-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold mb-2">Staff Management</h1>
-                    <p className="text-muted-foreground">Manage staff accounts and roles</p>
+                    <h1 className="text-3xl font-bold mb-1">Staff Management</h1>
+                    <p className="text-muted-foreground">Manage your team's access and roles</p>
                 </div>
-                <Button size="lg" onClick={() => { resetForm(); setShowDialog(true); }}>
+                <Button size="lg" onClick={() => { resetForm(); setShowDialog(true); }} className="shadow-lg hover:shadow-xl transition-all">
                     <Plus className="w-5 h-5 mr-2" />
-                    Add Staff
+                    Add New Staff
                 </Button>
             </div>
 
-            <Card>
-                <CardContent className="p-6">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                            <Input
-                                placeholder="Search staff by name or username..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 h-12"
-                            />
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="bg-primary/5 border-primary/10 shadow-sm">
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-primary/10 rounded-full">
+                            <UsersIcon className="w-6 h-6 text-primary" />
                         </div>
-                    </div>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Total Staff</p>
+                            <h3 className="text-2xl font-bold">{staff.length}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-green-500/5 border-green-500/10 shadow-sm">
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-green-500/10 rounded-full">
+                            <UserCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Active Members</p>
+                            <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">{activeStaffCount}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-blue-500/5 border-blue-500/10 shadow-sm">
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="p-3 bg-blue-500/10 rounded-full">
+                            <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Admins</p>
+                            <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400">{adminCount}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
 
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Username</TableHead>
-                                <TableHead>Full Name</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Last Login</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredStaff.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-12">
-                                        <UsersIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                                        <p className="text-muted-foreground">No staff members found</p>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                filteredStaff.map((staffMember) => (
-                                    <TableRow key={staffMember.id}>
-                                        <TableCell className="font-mono">{staffMember.username}</TableCell>
-                                        <TableCell className="font-medium">{staffMember.full_name}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={staffMember.role === 'ADMIN' ? 'default' : 'secondary'}>
-                                                {staffMember.role}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={staffMember.is_active ? 'default' : 'destructive'}>
-                                                {staffMember.is_active ? 'Active' : 'Inactive'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            {staffMember.last_login ? formatDateTime(staffMember.last_login) : 'Never'}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(staffMember)}>
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(staffMember.id)}>
-                                                    <Trash2 className="w-4 h-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            {/* Search */}
+            <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search staff by name or username..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 h-11 bg-background shadow-sm rounded-full"
+                />
+            </div>
+
+            {/* Staff Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredStaff.length === 0 ? (
+                    <div className="col-span-full py-16 text-center bg-muted/20 rounded-xl border border-dashed">
+                        <div className="mx-auto w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mb-4">
+                            <UsersIcon className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No staff members found</h3>
+                        <p className="text-muted-foreground max-w-sm mx-auto mb-6">
+                            {searchQuery ? "Try adjusting your search terms." : "Get started by adding your first staff member."}
+                        </p>
+                        <Button variant="outline" onClick={() => { resetForm(); setShowDialog(true); }}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Staff
+                        </Button>
+                    </div>
+                ) : (
+                    filteredStaff.map((staffMember) => (
+                        <Card key={staffMember.id} className="group hover:shadow-md transition-all duration-200 overflow-hidden border-border/60">
+                            <div className={`h-2 w-full ${staffMember.is_active ? 'bg-green-500' : 'bg-muted'}`} />
+                            <CardContent className="p-6">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
+                                            <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                                                {getInitials(staffMember.full_name)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <h3 className="font-semibold text-lg line-clamp-1">{staffMember.full_name}</h3>
+                                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                                @{staffMember.username}
+                                                {staffMember.role === 'ADMIN' && (
+                                                    <Shield className="w-3 h-3 text-blue-500 fill-blue-500/20" />
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                                <MoreVertical className="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => openEditDialog(staffMember)}>
+                                                <Edit className="w-4 h-4 mr-2" />
+                                                Edit Details
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => handleDelete(staffMember.id)}
+                                                className="text-destructive focus:text-destructive"
+                                            >
+                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                Remove Staff
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+
+                                <div className="space-y-3 mt-4">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Role</span>
+                                        <Badge variant="outline" className="uppercase text-xs font-semibold">
+                                            {staffMember.role}
+                                        </Badge>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Status</span>
+                                        <Badge variant={staffMember.is_active ? 'default' : 'secondary'} className={staffMember.is_active ? 'bg-green-500/15 text-green-700 hover:bg-green-500/25 dark:text-green-400' : ''}>
+                                            {staffMember.is_active ? 'Active' : 'Deactivated'}
+                                        </Badge>
+                                    </div>
+                                    <div className="pt-3 mt-3 border-t text-xs text-muted-foreground flex items-center justify-between">
+                                        <span>Last Login</span>
+                                        <span>{staffMember.last_login ? formatDateTime(staffMember.last_login).split(',')[0] : 'Never'}</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))
+                )}
+            </div>
 
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>{editingStaff ? 'Edit Staff Member' : 'Add New Staff Member'}</DialogTitle>
-                        <DialogDescription>Fill in the staff member details</DialogDescription>
+                        <DialogTitle className="text-xl">{editingStaff ? 'Edit Profile' : 'New Staff Member'}</DialogTitle>
+                        <DialogDescription>
+                            {editingStaff ? 'Update account details and permissions.' : 'Create a new account for your team member.'}
+                        </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit}>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Username</label>
-                                <Input
-                                    required
-                                    value={formData.username}
-                                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                    placeholder="username"
-                                />
-                            </div>
-                            {!editingStaff && (
+                    <form onSubmit={handleSubmit} className="space-y-4 py-2">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Password</label>
+                                    <label className="text-sm font-medium">Username</label>
                                     <Input
-                                        type="password"
                                         required
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        placeholder="password"
+                                        value={formData.username}
+                                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                        placeholder="jdoe"
+                                        className="bg-muted/30"
                                     />
                                 </div>
-                            )}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Role</label>
+                                    <select
+                                        className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        value={formData.role}
+                                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                    >
+                                        <option value="PACKER">Packer</option>
+                                        <option value="ADMIN">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Full Name</label>
                                 <Input
@@ -347,36 +438,50 @@ export default function Staff() {
                                     value={formData.full_name}
                                     onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                                     placeholder="John Doe"
+                                    className="bg-muted/30"
                                 />
                             </div>
+
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Role</label>
-                                <select
-                                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2"
-                                    value={formData.role}
-                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                >
-                                    <option value="PACKER">Packer</option>
-                                    <option value="ADMIN">Admin</option>
-                                </select>
+                                <label className="text-sm font-medium flex items-center justify-between">
+                                    Password
+                                    {!editingStaff && <span className="text-destructive">*</span>}
+                                </label>
+                                <div className="relative">
+                                    <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <Input
+                                        type="password"
+                                        required={!editingStaff}
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        placeholder={editingStaff ? "Leave blank to keep current" : "Set secure password"}
+                                        className="pl-9 bg-muted/30"
+                                    />
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
+
+                            <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/20">
                                 <input
                                     type="checkbox"
                                     id="is_active"
                                     checked={formData.is_active}
                                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                                    className="w-4 h-4"
+                                    className="w-4 h-4 rounded text-primary focus:ring-primary"
                                 />
-                                <label htmlFor="is_active" className="text-sm font-medium">Active</label>
+                                <label htmlFor="is_active" className="text-sm font-medium cursor-pointer select-none flex-1">
+                                    Account Active
+                                </label>
+                                <Badge variant={formData.is_active ? 'outline' : 'destructive'}>
+                                    {formData.is_active ? 'Enabled' : 'Disabled'}
+                                </Badge>
                             </div>
                         </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
+                        <DialogFooter className="pt-4">
+                            <Button type="button" variant="ghost" onClick={() => setShowDialog(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit">
-                                {editingStaff ? 'Update Staff' : 'Create Staff'}
+                            <Button type="submit" className="min-w-[100px]">
+                                {editingStaff ? 'Save Changes' : 'Create Account'}
                             </Button>
                         </DialogFooter>
                     </form>

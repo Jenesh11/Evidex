@@ -47,8 +47,8 @@ export default function Sidebar() {
     };
 
     return (
-        <aside className="w-64 bg-card border-r border-border flex flex-col h-full">
-            <div className="p-4 border-b border-border">
+        <aside className="w-64 bg-card border-r border-border/50 flex flex-col h-full">
+            <div className="p-4 border-b border-border/30">
                 <div className="flex items-center gap-3">
                     <div className="w-20 h-20 flex items-center justify-center overflow-hidden rounded-lg">
                         <img src={logo} alt="Evidex Logo" className="w-32 h-32 max-w-none object-contain" />
@@ -60,7 +60,7 @@ export default function Sidebar() {
                 </div>
             </div>
 
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-hide">
                 {navItems.map((item) => {
                     // 1. Hide admin-only items from staff
                     if (item.adminOnly && isStaff) {
@@ -108,8 +108,38 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            <div className="p-4 border-t border-border mt-auto">
-                <div className="text-xs text-muted-foreground text-center">
+            <div className="mt-auto border-t border-border/30">
+                {/* Trial Progress Bar */}
+                <div className="p-4 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">
+                            {profile?.trial_expires_at && !profile?.plan_expires_at ? 'Trial Period' : 'Plan Status'}
+                        </span>
+                        <span className="font-medium text-foreground">
+                            {profile?.trial_expires_at && !profile?.plan_expires_at
+                                ? `${Math.max(0, Math.ceil((new Date(profile.trial_expires_at) - new Date()) / (1000 * 60 * 60 * 24)))} days left`
+                                : effectivePlan || 'STARTER'
+                            }
+                        </span>
+                    </div>
+                    {/* Always show progress bar */}
+                    <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+                        <div
+                            className={cn(
+                                "h-full transition-all duration-300",
+                                profile?.trial_expires_at && !profile?.plan_expires_at
+                                    ? "bg-gradient-to-r from-blue-500 to-purple-500"
+                                    : "bg-gradient-to-r from-purple-500 to-pink-500"
+                            )}
+                            style={{
+                                width: profile?.trial_expires_at && !profile?.plan_expires_at
+                                    ? `${Math.min(100, Math.max(0, (Math.ceil((new Date(profile.trial_expires_at) - new Date()) / (1000 * 60 * 60 * 24)) / 7) * 100))}%`
+                                    : '100%'
+                            }}
+                        />
+                    </div>
+                </div>
+                <div className="px-4 pb-4 text-xs text-muted-foreground text-center">
                     v1.0.0 • Local Storage
                 </div>
             </div>

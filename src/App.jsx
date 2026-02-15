@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { createHashRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
@@ -16,6 +16,8 @@ import ActivityLogs from './pages/ActivityLogs';
 import Analytics from './pages/Analytics';
 import Pricing from './pages/Pricing';
 import { Toaster } from '@/components/ui/toaster';
+import ToastProvider from './components/providers/ToastProvider';
+import UpdateNotification from './components/UpdateNotification';
 
 import OnboardingModal from './components/onboarding/OnboardingModal';
 
@@ -54,46 +56,58 @@ function PrivateRoute({ children }) {
     );
 }
 
-function AppRoutes() {
-    const { user, loading } = useAuth();
-    console.log('[AppRoutes] Rendering. User:', user, 'Loading:', loading);
-
+// Wrapper for Auth context access within router
+const AuthWrapper = () => {
     return (
-        <Routes>
-            <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-            <Route
-                path="/"
-                element={
-                    <PrivateRoute>
-                        <Layout />
-                    </PrivateRoute>
-                }
-            >
-                <Route index element={<Dashboard />} />
-                <Route path="inventory" element={<Inventory />} />
-                <Route path="inventory/reconciliation" element={<InventoryReconciliation />} />
-                <Route path="orders" element={<Orders />} />
-                <Route path="packing" element={<PackingCamera />} />
-                <Route path="returns" element={<Returns />} />
-                <Route path="staff" element={<Staff />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="activity-logs" element={<ActivityLogs />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="pricing" element={<Pricing />} />
-            </Route>
-        </Routes>
+        <AuthProvider>
+            <Outlet />
+        </AuthProvider>
     );
+};
+
+const router = createHashRouter([
+    {
+        element: <AuthWrapper />,
+        children: [
+            {
+                path: "/login",
+                element: <LoginWrapper />
+            },
+            {
+                path: "/",
+                element: <PrivateRoute><Layout /></PrivateRoute>,
+                children: [
+                    { index: true, element: <Dashboard /> },
+                    { path: "inventory", element: <Inventory /> },
+                    { path: "inventory/reconciliation", element: <InventoryReconciliation /> },
+                    { path: "orders", element: <Orders /> },
+                    { path: "packing", element: <PackingCamera /> },
+                    { path: "returns", element: <Returns /> },
+                    { path: "staff", element: <Staff /> },
+                    { path: "settings", element: <Settings /> },
+                    { path: "activity-logs", element: <ActivityLogs /> },
+                    { path: "analytics", element: <Analytics /> },
+                    { path: "pricing", element: <Pricing /> }
+                ]
+            }
+        ]
+    }
+]);
+
+// Special wrapper for Login to handle redirect logic
+function LoginWrapper() {
+    const { user } = useAuth();
+    if (user) return <Navigate to="/" />;
+    return <Login />;
 }
 
 function App() {
     return (
         <ThemeProvider>
-            <AuthProvider>
-                <Router>
-                    <AppRoutes />
-                    <Toaster />
-                </Router>
-            </AuthProvider>
+            <RouterProvider router={router} />
+            <Toaster />
+            <ToastProvider />
+            <UpdateNotification />
         </ThemeProvider>
     );
 }

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import toast from '@/hooks/useToast';
 
 export default function PackingCamera() {
     const { user } = useAuth();
@@ -100,10 +101,10 @@ export default function PackingCamera() {
                     }
                     setCameraError('Selected camera not found. Please reselect in Settings.');
                 } catch (fallbackError) {
-                    setCameraError(`Camera access failed: ${fallbackError.message}`);
+                    setCameraError(`Camera access failed: ${fallbackError.message} `);
                 }
             } else {
-                setCameraError(`Camera access failed: ${error.message}`);
+                setCameraError(`Camera access failed: ${error.message} `);
             }
         }
     };
@@ -139,17 +140,18 @@ export default function PackingCamera() {
             }, 1000);
         } catch (error) {
             console.error('[Recording] Start error:', error);
-            alert(`Failed to start recording: ${error.message}`);
+            toast.error(`Failed to start recording: ${error.message} `);
         }
     };
 
     const stopRecording = async () => {
         // Check if checklist is complete
         if (!checklistProduct || !checklistQuantity || !checklistSealing) {
-            alert('Please complete all checklist items before stopping recording:\n\n' +
-                (!checklistProduct ? '- Correct product packed\n' : '') +
-                (!checklistQuantity ? '- Correct quantity packed\n' : '') +
-                (!checklistSealing ? '- Proper sealing done' : ''));
+            let message = 'Please complete all checklist items before stopping recording:\n\n';
+            if (!checklistProduct) message += '• Correct product packed\n';
+            if (!checklistQuantity) message += '• Correct quantity packed\n';
+            if (!checklistSealing) message += '• Proper sealing done';
+            toast.warning(message);
             return;
         }
 
@@ -167,7 +169,7 @@ export default function PackingCamera() {
     const capturePhoto = async (type) => {
         try {
             if (!videoRef.current) {
-                alert('Video not available');
+                toast.error('Video not available');
                 return;
             }
 
@@ -212,17 +214,17 @@ export default function PackingCamera() {
                         setPhotoAfterSeal({ url: previewUrl, path: result.filePath });
                     }
 
-                    console.log(`[Photo] Captured ${type}:`, result.filePath);
+                    console.log(`[Photo] Captured ${type}: `, result.filePath);
                 } catch (error) {
                     console.error('[Photo] Error saving:', error);
-                    alert(`Failed to save photo: ${error.message}`);
+                    toast.error(`Failed to save photo: ${error.message} `);
                 } finally {
                     setIsCapturingPhoto(false);
                 }
             }, 'image/jpeg', 0.9);
         } catch (error) {
             console.error('[Photo] Capture error:', error);
-            alert(`Failed to capture photo: ${error.message}`);
+            toast.error(`Failed to capture photo: ${error.message} `);
             setIsCapturingPhoto(false);
         }
     };
@@ -274,14 +276,14 @@ export default function PackingCamera() {
         } catch (error) {
             console.error('[Save] Error:', error);
             setSaveStatus('error');
-            alert(`Failed to save video: ${error.message}`);
+            toast.error(`Failed to save video: ${error.message} `);
         }
     };
 
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')} `;
     };
 
     return (
@@ -474,10 +476,10 @@ export default function PackingCamera() {
                                             key={order.id}
                                             onClick={() => setSelectedOrder(order)}
                                             disabled={isRecording}
-                                            className={`w-full p-4 rounded-lg border-2 transition-all text-left ${selectedOrder?.id === order.id
-                                                ? 'border-primary bg-primary/10'
-                                                : 'border-border hover:border-primary/50 hover:bg-accent'
-                                                } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`w - full p - 4 rounded - lg border - 2 transition - all text - left ${selectedOrder?.id === order.id
+                                                    ? 'border-primary bg-primary/10'
+                                                    : 'border-border hover:border-primary/50 hover:bg-accent'
+                                                } ${isRecording ? 'opacity-50 cursor-not-allowed' : ''} `}
                                         >
                                             <p className="font-mono font-semibold text-sm mb-1">{order.order_number}</p>
                                             <p className="text-sm text-muted-foreground">{order.customer_name}</p>

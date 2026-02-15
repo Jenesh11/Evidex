@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, LogOut, User, Crown } from 'lucide-react';
+import { Moon, Sun, LogOut, User, Crown, Mail, Calendar, Shield, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { PLANS, PLAN_FEATURES } from '@/config/plans';
 
 export default function Header() {
     const { theme, toggleTheme } = useTheme();
-    const { user, logout } = useAuth();
+    const { user, profile, logout, effectivePlan, trialDaysRemaining, isLifetime, planExpiresAt } = useAuth();
     const [currentPlan, setCurrentPlan] = useState(PLANS.PRO);
 
     useEffect(() => {
@@ -28,7 +36,7 @@ export default function Header() {
     };
 
     const getPlanBadgeStyle = () => {
-        switch (currentPlan) {
+        switch (effectivePlan || currentPlan) {
             case PLANS.STARTER:
                 return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
             case PLANS.PRO:
@@ -40,11 +48,51 @@ export default function Header() {
         }
     };
 
+    const formatDate = (isoString) => {
+        if (!isoString) return 'N/A';
+        return new Date(isoString).toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    const getStatusText = () => {
+        if (trialDaysRemaining > 0) {
+            return {
+                text: `${trialDaysRemaining} days remaining`,
+                type: 'trial',
+                color: 'text-blue-600 dark:text-blue-400'
+            };
+        }
+        if (isLifetime) {
+            return {
+                text: 'Lifetime Access',
+                type: 'lifetime',
+                color: 'text-purple-600 dark:text-purple-400'
+            };
+        }
+        if (planExpiresAt) {
+            return {
+                text: `Until ${formatDate(planExpiresAt)}`,
+                type: 'paid',
+                color: 'text-green-600 dark:text-green-400'
+            };
+        }
+        return {
+            text: 'No Active Plan',
+            type: 'none',
+            color: 'text-red-600 dark:text-red-400'
+        };
+    };
+
+    const statusInfo = getStatusText();
+
     return (
-        <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
+        <header className="h-16 border-b border-border/30 bg-card px-6 flex items-center justify-between shadow-sm">
             <div>
-                <h2 className="text-lg font-semibold">Welcome back, {user?.fullName || 'User'}</h2>
-                <p className="text-sm text-muted-foreground">{user?.role || 'Role'}</p>
+                <h2 className="text-lg font-semibold">Welcome back, {user?.email?.split('@')[0] || 'User'}</h2>
+                <p className="text-sm text-muted-foreground">{profile?.role || 'Role'}</p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -57,18 +105,99 @@ export default function Header() {
                 {/* Plan Badge */}
                 <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold ${getPlanBadgeStyle()}`}>
                     <Crown className="w-3.5 h-3.5" />
-                    {PLAN_FEATURES[currentPlan]?.name || 'Pro'}
+                    {PLAN_FEATURES[effectivePlan || currentPlan]?.name || 'Pro'}
                 </div>
 
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm font-medium">{user?.username}</span>
-                </div>
+                {/* User Account Dropdown */}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="secondary" size="sm" className="flex items-center gap-2 hover:bg-secondary/80">
+                            <User className="w-4 h-4" />
+                            <span className="text-sm font-medium">{user?.email?.split('@')[0] || 'Account'}</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-80 p-0">
+                        {/* Header Section */}
+                        <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 dark:from-purple-500/20 dark:to-blue-500/20 p-4 border-b">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                                    {user?.email?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold truncate">{user?.email?.split('@')[0] || 'User'}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{user?.email || 'No email'}</p>
+                                </div>
+                            </div>
+                        </div>
 
-                <Button variant="outline" size="sm" onClick={logout}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                </Button>
+                        {/* Account Details Section */}
+                        <div className="p-4 space-y-3">
+                            {/* Role */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Shield className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm text-muted-foreground">Role</span>
+                                </div>
+                                <span className="text-sm font-medium">{profile?.role || 'N/A'}</span>
+                            </div>
+
+                            {/* Plan */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Crown className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm text-muted-foreground">Plan</span>
+                                </div>
+                                <div className={`px-2 py-0.5 rounded text-xs font-semibold ${getPlanBadgeStyle()}`}>
+                                    {effectivePlan || 'STARTER'}
+                                </div>
+                            </div>
+
+                            {/* Status */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm text-muted-foreground">Status</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    {statusInfo.type === 'trial' && (
+                                        <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium">
+                                            Trial
+                                        </span>
+                                    )}
+                                    <span className={`text-sm font-medium ${statusInfo.color}`}>
+                                        {statusInfo.text}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Workspace ID */}
+                            {profile?.workspace_id && (
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Database className="w-4 h-4 text-muted-foreground" />
+                                        <span className="text-sm text-muted-foreground">Workspace</span>
+                                    </div>
+                                    <span className="text-xs font-mono text-muted-foreground">
+                                        {profile.workspace_id.slice(0, 8)}...
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        <DropdownMenuSeparator className="my-0" />
+
+                        {/* Logout Button */}
+                        <div className="p-2">
+                            <DropdownMenuItem
+                                onClick={logout}
+                                className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer"
+                            >
+                                <LogOut className="w-4 h-4 mr-2" />
+                                <span className="font-medium">Logout</span>
+                            </DropdownMenuItem>
+                        </div>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </header>
     );
