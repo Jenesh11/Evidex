@@ -81,7 +81,6 @@
       "icon": "build/icon.ico",
       "verifyUpdateCodeSignature": false,
       "forceCodeSigning": false,
-      "sign": null,
       "publish": {
         "provider": "github",
         "owner": "Jenesh11",
