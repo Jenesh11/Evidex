@@ -74,8 +74,8 @@ export default function Footer() {
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Mail className="h-3 w-3" />
-                        <a href="mailto:support@evidex.com" className="hover:text-primary transition-colors">
-                            support@evidex.com
+                        <a href="mailto:support@evidex.in" className="hover:text-primary transition-colors">
+                            support@evidex.in
                         </a>
                     </div>
                 </div>

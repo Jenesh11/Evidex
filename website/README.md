@@ -118,7 +118,7 @@ The website uses the same design system as the desktop app:
 
 ## 📧 Support
 
-For questions or issues, contact: support@evidex.com
+For questions or issues, contact: support@evidex.in
 
 ## 📄 License
 
