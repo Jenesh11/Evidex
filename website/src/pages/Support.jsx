@@ -60,9 +60,9 @@ export default function Support() {
                             <p className="text-sm text-muted-foreground mb-4">
                                 Get help via email. We typically respond within 24 hours.
                             </p>
-                            <a href="mailto:support@evidex.com">
+                            <a href="mailto:support@evidex.in">
                                 <Button variant="outline" className="w-full">
-                                    support@evidex.com
+                                    support@evidex.in
                                 </Button>
                             </a>
                         </CardContent>
