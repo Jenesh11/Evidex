@@ -51,7 +51,7 @@ export default function DownloadPage() {
                             </p>
                         </div>
 
-                        <Button size="lg" className="w-full sm:w-auto text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/EvidEx-Windows-Full.zip'}>
+                        <Button size="lg" className="w-full sm:w-auto text-lg px-8 py-6 h-auto" onClick={() => window.location.href = 'https://github.com/Jenesh11/Evidex/releases/download/Evidex/EvidEx-Windows-Full.zip'}>
                             <Download className="mr-3 h-6 w-6" />
                             Download EvidEx for Windows
                         </Button>
