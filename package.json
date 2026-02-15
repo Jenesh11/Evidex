@@ -57,7 +57,7 @@
     "autoprefixer": "^10.4.16",
     "concurrently": "^8.2.2",
     "electron": "^28.1.0",
-    "electron-builder": "^24.9.1",
+    "electron-builder": "^26.7.0",
     "electron-rebuild": "^3.2.9",
     "ffmpeg-static": "^5.2.0",
     "postcss": "^8.4.33",
@@ -90,7 +90,12 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "differentialPackage": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
     },
     "files": [
       "dist/**/*",
