@@ -27,6 +27,7 @@ jobs:
 
       - name: Build and Release
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_GH_TOKEN: ${{ secrets.VITE_GH_TOKEN }}
