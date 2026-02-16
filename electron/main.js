@@ -296,6 +296,15 @@ if (!gotTheLock) {
             // Notify splash we are checking
             splashWindow.webContents.on('did-finish-load', () => {
                 splashWindow.webContents.send('version', app.getVersion());
+
+                // Skip auto-update in development mode
+                if (!app.isPackaged) {
+                    console.log('[Auto-Update] Skipping update check in development mode');
+                    splashWindow.webContents.send('update-message', 'Starting application...');
+                    setTimeout(closeSplashAndShowMain, 1000);
+                    return;
+                }
+
                 splashWindow.webContents.send('update-message', 'Checking for updates...');
 
                 // Enable auto-download for splash screen updates
