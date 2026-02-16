@@ -24,9 +24,7 @@ export default function Footer() {
                     {/* Brand */}
                     <div className="col-span-1 md:col-span-2">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-                                <Logo className="h-10 w-10" />
-                            </div>
+                            <Logo className="h-10 w-10" />
                             <span className="text-2xl font-bold gradient-text">EvidEx</span>
                         </div>
                         <p className="text-sm text-muted-foreground max-w-md leading-relaxed mb-4">

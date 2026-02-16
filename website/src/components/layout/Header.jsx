@@ -23,9 +23,7 @@ export default function Header() {
             <nav className="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
                 <div className="flex lg:flex-1">
                     <Link to="/" className="-m-1.5 p-1.5 flex items-center gap-3 group">
-                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <Logo className="h-10 w-10" />
-                        </div>
+                        <Logo className="h-10 w-10 group-hover:scale-110 transition-transform duration-300" />
                         <span className="text-2xl font-bold gradient-text">EvidEx</span>
                     </Link>
                 </div>
