@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import logo from '@/assets/logo.png';
+import Logo from '@/components/ui/Logo';
 import { motion } from 'framer-motion';
 import { LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -69,7 +69,7 @@ export default function Login() {
                         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
                         className="inline-flex items-center justify-center mb-4"
                     >
-                        <img src={logo} alt="Evidex Logo" className="w-20 h-20 object-contain" />
+                        <Logo className="w-20 h-20" />
                     </motion.div>
                     <h1 className="text-4xl font-bold mb-2">Evidex</h1>
                     <p className="text-muted-foreground">Proof-first packing & returns protection system</p>

@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Download, Menu, X } from 'lucide-react';
 import { Button } from '../ui/Button';
+import Logo from '../ui/Logo';
 import { useState } from 'react';
 
 export default function Header() {
@@ -18,19 +19,21 @@ export default function Header() {
     const isActive = (path) => location.pathname === path;
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-border/40 glass">
-            <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 backdrop-premium bg-background/80">
+            <nav className="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
                 <div className="flex lg:flex-1">
-                    <Link to="/" className="-m-1.5 p-1.5 flex items-center gap-3">
-                        <img src="/logo.png" alt="EvidEx Logo" className="h-16 w-16 object-contain" />
-                        <span className="text-2xl font-bold">EvidEx</span>
+                    <Link to="/" className="-m-1.5 p-1.5 flex items-center gap-3 group">
+                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <Logo className="h-10 w-10" />
+                        </div>
+                        <span className="text-2xl font-bold gradient-text">EvidEx</span>
                     </Link>
                 </div>
 
                 <div className="flex lg:hidden">
                     <button
                         type="button"
-                        className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-foreground"
+                        className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-foreground hover:bg-primary/10 transition-colors"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     >
                         <span className="sr-only">Toggle menu</span>
@@ -47,19 +50,22 @@ export default function Header() {
                         <Link
                             key={item.name}
                             to={item.href}
-                            className={`text-sm font-semibold leading-6 transition-colors ${isActive(item.href)
+                            className={`text-sm font-semibold leading-6 transition-all relative ${isActive(item.href)
                                 ? 'text-primary'
                                 : 'text-foreground hover:text-primary'
                                 }`}
                         >
                             {item.name}
+                            {isActive(item.href) && (
+                                <span className="absolute -bottom-[1.15rem] left-0 right-0 h-0.5 bg-gradient-to-r from-primary to-primary/80" />
+                            )}
                         </Link>
                     ))}
                 </div>
 
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end">
                     <Link to="/download">
-                        <Button>
+                        <Button className="btn-gradient btn-glow">
                             <Download className="mr-2 h-4 w-4" />
                             Download
                         </Button>
@@ -69,15 +75,15 @@ export default function Header() {
 
             {/* Mobile menu */}
             {mobileMenuOpen && (
-                <div className="lg:hidden">
-                    <div className="space-y-2 px-6 pb-6 pt-2">
+                <div className="lg:hidden border-t border-border/40 backdrop-blur-xl bg-background/95">
+                    <div className="space-y-1 px-4 pb-4 pt-2">
                         {navigation.map((item) => (
                             <Link
                                 key={item.name}
                                 to={item.href}
-                                className={`block rounded-lg px-3 py-2 text-base font-semibold leading-7 ${isActive(item.href)
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-foreground hover:bg-accent'
+                                className={`block rounded-lg px-4 py-3 text-base font-semibold leading-7 transition-all ${isActive(item.href)
+                                    ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg'
+                                    : 'text-foreground hover:bg-primary/10'
                                     }`}
                                 onClick={() => setMobileMenuOpen(false)}
                             >
@@ -85,7 +91,7 @@ export default function Header() {
                             </Link>
                         ))}
                         <Link to="/download" onClick={() => setMobileMenuOpen(false)}>
-                            <Button className="w-full mt-4">
+                            <Button className="w-full mt-4 btn-gradient btn-glow">
                                 <Download className="mr-2 h-4 w-4" />
                                 Download
                             </Button>

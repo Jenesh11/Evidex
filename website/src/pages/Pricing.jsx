@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-import { Check, X, Download } from 'lucide-react';
+import { Check, X, Download, Sparkles, Zap, Crown } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -11,6 +11,8 @@ export default function Pricing() {
             name: 'Starter',
             price: '₹999',
             description: 'For small sellers and single PC setups',
+            icon: Zap,
+            gradient: 'from-cyan-500 to-blue-500',
             features: [
                 { name: '1 PC license', included: true },
                 { name: 'Packing camera recording', included: true },
@@ -27,6 +29,8 @@ export default function Pricing() {
             price: '₹2,499',
             description: 'For growing businesses',
             popular: true,
+            icon: Crown,
+            gradient: 'from-purple-500 to-pink-500',
             features: [
                 { name: 'Everything in Starter', included: true },
                 { name: 'Multiple staff accounts', included: true },
@@ -40,6 +44,25 @@ export default function Pricing() {
         },
     ];
 
+    const faqs = [
+        {
+            question: 'Can I upgrade or downgrade?',
+            answer: 'Yes, you can upgrade from Starter to Pro at any time. Contact support for assistance.',
+        },
+        {
+            question: 'What happens after the trial?',
+            answer: 'After 7 days, you\'ll need to activate a license code to continue using the app. Your data will be preserved.',
+        },
+        {
+            question: 'Is there a refund policy?',
+            answer: 'We offer a 7-day free trial so you can try before you buy. Contact support for refund requests.',
+        },
+        {
+            question: 'Do you offer annual plans?',
+            answer: 'Annual plans are coming soon. Contact our sales team for enterprise pricing.',
+        },
+    ];
+
     return (
         <>
             <Helmet>
@@ -49,53 +72,67 @@ export default function Pricing() {
 
             <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
                 {/* Header */}
-                <div className="mx-auto max-w-2xl text-center mb-16">
-                    <Badge variant="success" className="mb-4">
+                <div className="mx-auto max-w-2xl text-center mb-16 animate-fade-in">
+                    <Badge variant="success" className="mb-4 animate-pulse-glow">
+                        <Sparkles className="mr-2 h-3 w-3" />
                         7-Day Free Trial
                     </Badge>
-                    <h1 className="text-4xl font-bold tracking-tight sm:text-5xl mb-6">
-                        Simple, Transparent Pricing
+                    <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-6">
+                        Simple, <span className="gradient-text">Transparent Pricing</span>
                     </h1>
-                    <p className="text-lg text-muted-foreground">
+                    <p className="text-lg sm:text-xl text-muted-foreground">
                         Choose the plan that's right for your business. All plans include a 7-day free trial.
                     </p>
                 </div>
 
                 {/* Pricing Cards */}
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 max-w-5xl mx-auto mb-16">
-                    {plans.map((plan) => (
+                    {plans.map((plan, index) => (
                         <Card
                             key={plan.name}
-                            className={plan.popular ? 'border-primary shadow-lg shadow-primary/20' : ''}
+                            className={`${plan.popular ? 'border-primary shadow-2xl shadow-primary/30 scale-105' : 'card-hover'} card-glow relative overflow-hidden animate-fade-in`}
+                            style={{ animationDelay: `${index * 0.1}s` }}
                         >
                             {plan.popular && (
-                                <div className="px-6 pt-6">
-                                    <Badge variant="default">Most Popular</Badge>
+                                <div className="absolute inset-0 gradient-vibrant opacity-5" />
+                            )}
+                            {plan.popular && (
+                                <div className="absolute top-0 right-0 px-6 py-2 bg-gradient-to-r from-primary to-primary/80 text-white text-sm font-semibold rounded-bl-2xl">
+                                    Most Popular
                                 </div>
                             )}
-                            <CardHeader>
-                                <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                                <CardDescription>{plan.description}</CardDescription>
-                                <div className="mt-4">
-                                    <span className="text-4xl font-bold">{plan.price}</span>
-                                    <span className="text-muted-foreground">/month</span>
+                            <CardHeader className="relative">
+                                <div className={`mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${plan.gradient} shadow-lg`}>
+                                    <plan.icon className="h-7 w-7 text-white" />
+                                </div>
+                                <CardTitle className="text-3xl">{plan.name}</CardTitle>
+                                <CardDescription className="text-base">{plan.description}</CardDescription>
+                                <div className="mt-6">
+                                    <span className="text-5xl font-bold gradient-text">{plan.price}</span>
+                                    <span className="text-muted-foreground text-lg">/month</span>
                                 </div>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="relative">
                                 <Link to="/download">
-                                    <Button className="w-full mb-6" variant={plan.popular ? 'default' : 'outline'}>
+                                    <Button
+                                        className={`w-full mb-6 ${plan.popular ? 'btn-gradient btn-glow' : ''}`}
+                                        variant={plan.popular ? 'default' : 'outline'}
+                                        size="lg"
+                                    >
                                         Start Free Trial
                                     </Button>
                                 </Link>
-                                <ul className="space-y-3">
+                                <ul className="space-y-4">
                                     {plan.features.map((feature, index) => (
                                         <li key={index} className="flex items-start gap-3">
                                             {feature.included ? (
-                                                <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                                                <div className="flex-shrink-0 h-5 w-5 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mt-0.5">
+                                                    <Check className="h-3 w-3 text-white" />
+                                                </div>
                                             ) : (
                                                 <X className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                                             )}
-                                            <span className={feature.included ? 'text-foreground' : 'text-muted-foreground'}>
+                                            <span className={`${feature.included ? 'text-foreground' : 'text-muted-foreground'} text-base`}>
                                                 {feature.name}
                                             </span>
                                         </li>
@@ -107,11 +144,13 @@ export default function Pricing() {
                 </div>
 
                 {/* Trial Info */}
-                <section className="mb-16">
-                    <Card className="glass">
-                        <CardContent className="p-8">
-                            <h2 className="text-2xl font-bold mb-4 text-center">7-Day Free Trial Included</h2>
-                            <p className="text-muted-foreground text-center max-w-2xl mx-auto">
+                <section className="mb-16 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                    <Card className="glass-strong card-glow relative overflow-hidden">
+                        <div className="absolute inset-0 gradient-mesh opacity-20" />
+                        <CardContent className="relative p-10 sm:p-12">
+                            <Sparkles className="h-12 w-12 text-primary mx-auto mb-6 animate-pulse" />
+                            <h2 className="text-3xl font-bold mb-4 text-center">7-Day Free Trial Included</h2>
+                            <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto">
                                 Every plan comes with a 7-day free trial. No credit card required.
                                 Try all Pro features during your trial period. Cancel anytime.
                             </p>
@@ -120,75 +159,45 @@ export default function Pricing() {
                 </section>
 
                 {/* Payment Info */}
-                <section className="mb-16">
-                    <Card>
+                <section className="mb-16 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                    <Card className="card-hover">
                         <CardHeader>
-                            <CardTitle>Payment & Activation</CardTitle>
-                            <CardDescription>How to activate your subscription</CardDescription>
+                            <CardTitle className="text-2xl">Payment & Activation</CardTitle>
+                            <CardDescription className="text-base">How to activate your subscription</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <p className="text-muted-foreground">
+                            <p className="text-muted-foreground leading-relaxed">
                                 After your trial ends, you'll need to purchase a license code to continue using EvidEx.
                                 License codes can be purchased through our payment gateway (coming soon) or by contacting
                                 our sales team.
                             </p>
-                            <p className="text-muted-foreground">
+                            <p className="text-muted-foreground leading-relaxed">
                                 Once you have a license code, simply enter it in the app's Pricing page to activate
                                 your subscription. Your subscription will be valid for one month from activation.
                             </p>
                             <div className="pt-4">
-                                <Badge variant="outline">Payment Gateway Coming Soon</Badge>
+                                <Badge variant="outline" className="text-sm">Payment Gateway Coming Soon</Badge>
                             </div>
                         </CardContent>
                     </Card>
                 </section>
 
                 {/* FAQ */}
-                <section>
-                    <h2 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
+                <section className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                    <h2 className="text-3xl font-bold mb-8 text-center">
+                        Frequently Asked <span className="gradient-text">Questions</span>
+                    </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Can I upgrade or downgrade?</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Yes, you can upgrade from Starter to Pro at any time. Contact support for assistance.
-                                </p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">What happens after the trial?</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    After 7 days, you'll need to activate a license code to continue using the app.
-                                    Your data will be preserved.
-                                </p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Is there a refund policy?</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    We offer a 7-day free trial so you can try before you buy. Contact support for
-                                    refund requests.
-                                </p>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Do you offer annual plans?</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Annual plans are coming soon. Contact our sales team for enterprise pricing.
-                                </p>
-                            </CardContent>
-                        </Card>
+                        {faqs.map((faq, index) => (
+                            <Card key={index} className="card-hover">
+                                <CardHeader>
+                                    <CardTitle className="text-lg">{faq.question}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
                 </section>
             </div>
