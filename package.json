@@ -1,6 +1,6 @@
 {
   "name": "inventory-order-management",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Proof-first packing & returns protection system",
   "main": "electron/main.js",
   "type": "module",
