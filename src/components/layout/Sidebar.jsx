@@ -1,5 +1,5 @@
 import React from 'react';
-import logo from '@/assets/logo.png';
+import Logo from '@/components/ui/Logo';
 
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Package, ShoppingCart, Video, RotateCcw, Users, Settings as SettingsIcon, Scale, FileText, BarChart3, Crown, Lock } from 'lucide-react';
@@ -50,8 +50,8 @@ export default function Sidebar() {
         <aside className="w-64 bg-card border-r border-border/50 flex flex-col h-full">
             <div className="p-4 border-b border-border/30">
                 <div className="flex items-center gap-3">
-                    <div className="w-20 h-20 flex items-center justify-center overflow-hidden rounded-lg">
-                        <img src={logo} alt="Evidex Logo" className="w-32 h-32 max-w-none object-contain" />
+                    <div className="w-12 h-12 flex items-center justify-center">
+                        <Logo className="w-12 h-12" />
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Evidex</h1>
