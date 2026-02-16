@@ -176,6 +176,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         },
         downloadUpdate: () => ipcRenderer.send('download-update'),
         installUpdate: () => ipcRenderer.send('install-update'),
+        setToken: (token) => ipcRenderer.send('update-token', token),
         removeUpdateListener: () => {
             ipcRenderer.removeAllListeners('update-available');
             ipcRenderer.removeAllListeners('update-error');

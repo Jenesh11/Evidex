@@ -102,6 +102,15 @@ function LoginWrapper() {
 }
 
 function App() {
+    useEffect(() => {
+        // Send GitHub Token to main process for private repo updates
+        const token = import.meta.env.VITE_GH_TOKEN;
+        if (token && window.electronAPI?.updates?.setToken) {
+            console.log('[App] Sending GitHub token to main process');
+            window.electronAPI.updates.setToken(token);
+        }
+    }, []);
+
     return (
         <ThemeProvider>
             <RouterProvider router={router} />

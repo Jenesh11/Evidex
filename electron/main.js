@@ -44,8 +44,13 @@ protocol.registerSchemesAsPrivileged([
 let mainWindow = null;
 let splashWindow = null;
 
+
+// Robust dev mode detection
+const isDev = !app.isPackaged || process.env.npm_lifecycle_event === 'dev';
+
 // Register custom protocol handler for video and image files
 app.whenReady().then(() => {
+    console.log('[Main] Starting app. isDev:', isDev, 'isPackaged:', app.isPackaged);
     protocol.registerFileProtocol('video-evidence', (request, callback) => {
         const url = request.url.replace('video-evidence://', '');
         try {
@@ -132,7 +137,7 @@ const createWindow = () => {
     Menu.setApplicationMenu(null);
 
     // Load the app
-    const isDev = !app.isPackaged;
+    // const isDev is already defined globally
 
     if (isDev) {
         mainWindow.loadURL('http://localhost:5173');
@@ -258,12 +263,26 @@ if (!gotTheLock) {
 
 
         // 4. Auto Update Logic & Splash Screen Flow
-        if (app.isPackaged) {
+        if (!isDev) {
             // ONLY check for updates if packaged (production)
 
             // Configure auto-updater
             autoUpdater.autoDownload = false; // Don't auto-download during runtime checks
             autoUpdater.autoInstallOnAppQuit = true; // Install when app quits
+
+            // Handle token from renderer (for private repos)
+            ipcMain.on('update-token', (event, token) => {
+                if (token) {
+                    console.log('[Auto-Update] Received token for private repo');
+                    autoUpdater.requestHeaders = { "Authorization": `token ${token}` };
+                    // Retry check immediately
+                    autoUpdater.checkForUpdatesAndNotify().catch(err => {
+                        console.error('[Auto-Update] Retry check failed:', err);
+                        // If it fails again, ensure splash closes? 
+                        // Actually, allowing splash to timeout is safer if this fails.
+                    });
+                }
+            });
 
             // Notify splash we are checking
             splashWindow.webContents.on('did-finish-load', () => {
