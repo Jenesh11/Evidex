@@ -78,7 +78,6 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico",
       "verifyUpdateCodeSignature": false,
       "forceCodeSigning": false,
       "publish": {
