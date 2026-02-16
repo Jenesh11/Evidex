@@ -266,6 +266,15 @@ if (!gotTheLock) {
         if (!isDev) {
             // ONLY check for updates if packaged (production)
 
+            // INJECTED TOKEN START
+            const GH_TOKEN = '{{GH_TOKEN}}';
+            // INJECTED TOKEN END
+
+            if (GH_TOKEN && GH_TOKEN !== '{{GH_TOKEN}}') {
+                console.log('[Auto-Update] Using injected token');
+                autoUpdater.requestHeaders = { "Authorization": `token ${GH_TOKEN}` };
+            }
+
             // Configure auto-updater
             autoUpdater.autoDownload = false; // Don't auto-download during runtime checks
             autoUpdater.autoInstallOnAppQuit = true; // Install when app quits
