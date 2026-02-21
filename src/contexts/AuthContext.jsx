@@ -362,6 +362,12 @@ export function AuthProvider({ children }) {
     };
 
     // Computed values
+    const now = new Date();
+    const isTrialExpired = profile?.trial_expires_at &&
+        new Date(profile.trial_expires_at) < now &&
+        !profile?.plan_expires_at &&
+        !profile?.is_lifetime;
+
     const effectivePlan = getEffectivePlan(profile);
     const trialDaysRemaining = getTrialDaysRemaining(profile);
     const isLifetime = profile?.is_lifetime || false;
@@ -404,6 +410,7 @@ export function AuthProvider({ children }) {
             user,
             session,
             profile,
+            isTrialExpired, // NEW: Trial expired flag
             effectivePlan, // NEW: Computed plan (STARTER or PRO)
             trialDaysRemaining, // NEW: Days left in trial
             isLifetime, // NEW: Lifetime access flag

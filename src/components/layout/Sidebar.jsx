@@ -26,22 +26,30 @@ const navItems = [
 
 
 export default function Sidebar() {
-    const { hasPermission, effectivePlan, profile, user } = useAuth();
+    const { hasPermission, effectivePlan, profile, user, isTrialExpired } = useAuth();
     const navigate = useNavigate();
 
     // Check if user is staff (not admin)
     // Staff members have a role property, admins authenticate via Supabase and don't have role or have role 'ADMIN'
     const isStaff = profile?.role && profile.role !== 'ADMIN' && profile.role !== 'admin';
 
-    console.log('[Sidebar] Profile:', profile);
-    console.log('[Sidebar] isStaff:', isStaff);
+    const isItemLocked = (item) => {
+        // 1. Check Plan Lock
+        if (item.requiredFeature && !hasFeature(effectivePlan, item.requiredFeature)) {
+            return { locked: true, reason: 'Upgrade to Pro to unlock this feature' };
+        }
 
-    const isFeatureLocked = (requiredFeature) => {
-        if (!requiredFeature) return false;
-        return !hasFeature(effectivePlan, requiredFeature);
+        // 2. Check Trial Expiry Lock
+        // Allowed items: Dashboard ('/'), Pricing ('/pricing'), Settings ('/settings')
+        const allowedPaths = ['/', '/pricing', '/settings'];
+        if (isTrialExpired && !allowedPaths.includes(item.to)) {
+            return { locked: true, reason: 'Trial expired - Upgrade to continue' };
+        }
+
+        return { locked: false };
     };
 
-    const handleLockedClick = (e) => {
+    const handleLockedClick = (e, lockInfo) => {
         e.preventDefault();
         navigate('/pricing');
     };
@@ -70,14 +78,15 @@ export default function Sidebar() {
                         return null;
                     }
 
-                    const planLocked = isFeatureLocked(item.requiredFeature);
+                    const lockInfo = isItemLocked(item);
+                    const planLocked = lockInfo.locked;
                     const Icon = item.icon;
 
                     return (
                         <div key={item.to} className="relative group">
                             <NavLink
                                 to={planLocked ? '#' : item.to}
-                                onClick={(e) => planLocked && handleLockedClick(e, item)}
+                                onClick={(e) => planLocked && handleLockedClick(e, lockInfo)}
                                 end={item.to === '/' || item.to === '/inventory'}
                                 className={({ isActive }) =>
                                     cn(
@@ -97,7 +106,7 @@ export default function Sidebar() {
                             {/* CSS Tooltip - only shows on hover */}
                             {planLocked && (
                                 <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap pointer-events-none z-50">
-                                    Upgrade to Pro to unlock this feature
+                                    {lockInfo.reason}
                                     <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-popover"></div>
                                 </div>
                             )}

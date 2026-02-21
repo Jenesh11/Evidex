@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    const { isTrialExpired } = useAuth();
     const [stats, setStats] = useState({
         totalProducts: 0,
         lowStock: 0,
@@ -25,6 +26,14 @@ export default function Dashboard() {
     });
     const [recentOrders, setRecentOrders] = useState([]);
     const [lowStockProducts, setLowStockProducts] = useState([]);
+
+    const handleLockedAction = (action) => {
+        if (isTrialExpired) {
+            navigate('/pricing');
+            return true;
+        }
+        return false;
+    };
 
     useEffect(() => {
         loadDashboardData();
@@ -57,12 +66,12 @@ export default function Dashboard() {
     };
 
     // Quick Actions handlers
-    const handleAddProduct = () => navigate('/inventory', { state: { openAddModal: true } });
-    const handleNewOrder = () => navigate('/orders', { state: { openCreateModal: true } });
-    const handleAddStaff = () => navigate('/staff', { state: { openAddModal: true } });
-    const handleReconciliation = () => navigate('/inventory/reconciliation');
-    const handleAnalytics = () => navigate('/analytics');
-    const handleActivityLogs = () => navigate('/activity-logs');
+    const handleAddProduct = () => !handleLockedAction() && navigate('/inventory', { state: { openAddModal: true } });
+    const handleNewOrder = () => !handleLockedAction() && navigate('/orders', { state: { openCreateModal: true } });
+    const handleAddStaff = () => !handleLockedAction() && navigate('/staff', { state: { openAddModal: true } });
+    const handleReconciliation = () => !handleLockedAction() && navigate('/inventory/reconciliation');
+    const handleAnalytics = () => !handleLockedAction() && navigate('/analytics');
+    const handleActivityLogs = () => !handleLockedAction() && navigate('/activity-logs');
 
     const statCards = [
         {
@@ -120,8 +129,13 @@ export default function Dashboard() {
                     <p className="text-muted-foreground text-lg">Overview of your warehouse operations</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={handleNewOrder} size="lg" className="shadow-lg shadow-primary/20">
+                    <Button
+                        onClick={handleNewOrder}
+                        size="lg"
+                        className={cn("shadow-lg shadow-primary/20", isTrialExpired && "opacity-60")}
+                    >
                         <Plus className="w-5 h-5 mr-2" /> New Order
+                        {isTrialExpired && <Lock className="w-4 h-4 ml-2" />}
                     </Button>
                 </div>
             </div>
@@ -165,8 +179,13 @@ export default function Dashboard() {
                                 <CardTitle className="text-xl">Recent Orders</CardTitle>
                                 <CardDescription>Latest transaction activity</CardDescription>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => navigate('/orders')} className="group">
-                                View All <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => !handleLockedAction() && navigate('/orders')}
+                                className={cn("group", isTrialExpired && "opacity-60")}
+                            >
+                                View All {isTrialExpired ? <Lock className="w-4 h-4 ml-2" /> : <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
                             </Button>
                         </CardHeader>
                         <Separator />
@@ -185,8 +204,11 @@ export default function Dashboard() {
                                         {recentOrders.map((order) => (
                                             <div
                                                 key={order.id}
-                                                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer group"
-                                                onClick={() => navigate('/orders')}
+                                                className={cn(
+                                                    "flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer group",
+                                                    isTrialExpired && "opacity-75"
+                                                )}
+                                                onClick={() => !handleLockedAction() && navigate('/orders')}
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${['DELIVERED'].includes(order.status) ? 'bg-green-500/10 text-green-500' :
@@ -227,15 +249,23 @@ export default function Dashboard() {
                         {quickActions.map((action, i) => (
                             <motion.button
                                 key={action.title}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
+                                whileHover={isTrialExpired ? {} : { scale: 1.02 }}
+                                whileTap={isTrialExpired ? {} : { scale: 0.98 }}
                                 onClick={action.action}
-                                className="flex flex-col items-center justify-center p-4 rounded-xl border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all group text-center h-32 shadow-sm"
+                                className={cn(
+                                    "flex flex-col items-center justify-center p-4 rounded-xl border bg-card transition-all group text-center h-32 shadow-sm relative",
+                                    isTrialExpired
+                                        ? "opacity-60 cursor-not-allowed border-dashed"
+                                        : "hover:border-primary/50 hover:bg-primary/5 shadow-sm"
+                                )}
                             >
                                 <div className={`w-10 h-10 rounded-full ${action.bg} ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                                     <action.icon className="w-5 h-5" />
                                 </div>
-                                <span className="text-sm font-semibold">{action.title}</span>
+                                <span className="text-sm font-semibold flex items-center gap-1">
+                                    {action.title}
+                                    {isTrialExpired && <Lock className="w-3.5 h-3.5" />}
+                                </span>
                                 <span className="text-xs text-muted-foreground mt-1">{action.desc}</span>
                             </motion.button>
                         ))}
@@ -257,7 +287,14 @@ export default function Dashboard() {
                             ) : (
                                 <div className="divide-y divide-border/50">
                                     {lowStockProducts.map((product) => (
-                                        <div key={product.id} className="flex items-center justify-between p-4 hover:bg-orange-500/5 transition-colors group cursor-pointer" onClick={() => navigate('/inventory')}>
+                                        <div
+                                            key={product.id}
+                                            className={cn(
+                                                "flex items-center justify-between p-4 hover:bg-orange-500/5 transition-colors group cursor-pointer",
+                                                isTrialExpired && "opacity-75"
+                                            )}
+                                            onClick={() => !handleLockedAction() && navigate('/inventory')}
+                                        >
                                             <div>
                                                 <p className="font-medium text-sm text-foreground group-hover:text-orange-600 transition-colors">{product.name}</p>
                                                 <p className="text-xs text-muted-foreground font-mono mt-0.5">{product.sku}</p>
