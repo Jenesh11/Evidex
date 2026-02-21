@@ -266,15 +266,6 @@ if (!gotTheLock) {
         if (!isDev) {
             // ONLY check for updates if packaged (production)
 
-            // INJECTED TOKEN START
-            const GH_TOKEN = '{{GH_TOKEN}}';
-            // INJECTED TOKEN END
-
-            if (GH_TOKEN && GH_TOKEN !== '{{GH_TOKEN}}') {
-                console.log('[Auto-Update] Using injected token');
-                autoUpdater.requestHeaders = { "Authorization": `token ${GH_TOKEN}` };
-            }
-
             // Configure auto-updater - public repo, no token needed for downloads
             autoUpdater.autoDownload = false;
             autoUpdater.autoInstallOnAppQuit = true;

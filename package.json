@@ -78,6 +78,7 @@
     },
     "win": {
       "target": "nsis",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
       "verifyUpdateCodeSignature": false,
       "forceCodeSigning": false,
       "publish": {
