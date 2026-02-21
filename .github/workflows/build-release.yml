@@ -34,10 +34,6 @@ jobs:
       - name: Build Electron Windows installer
         run: npx electron-builder --win --publish never
 
-      - name: List dist-electron output
-        run: dir dist-electron
-        shell: cmd
-
       - name: Upload Release
         uses: softprops/action-gh-release@v2
         with:

@@ -80,7 +80,6 @@
       "target": "nsis",
       "verifyUpdateCodeSignature": false,
       "forceCodeSigning": false,
-      "sign": null,
       "publish": {
         "provider": "github",
         "owner": "Jenesh11",
