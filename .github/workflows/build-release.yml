@@ -3,7 +3,10 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers on version tags like v1.0.7, v1.0.8, etc.
+      - 'v*.*.*'
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -17,32 +20,32 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+
+      - name: Rebuild native modules for Electron
+        run: npm run rebuild
+        continue-on-error: true
 
       - name: Build Vite app
         run: npm run build
 
-      - name: Build Electron app
-        run: npm run build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Electron Windows installer
+        run: npx electron-builder --win --publish never
 
-      - name: Get version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-        shell: bash
+      - name: List dist-electron output
+        run: dir dist-electron
+        shell: cmd
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             dist-electron/*.exe
             dist-electron/latest.yml
+          generate_release_notes: true
           draft: false
           prerelease: false
-          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
