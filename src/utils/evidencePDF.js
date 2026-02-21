@@ -48,7 +48,7 @@ export const generateEvidencePDF = (evidenceData) => {
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     evidenceData.products.forEach((product, index) => {
-        doc.text(`${index + 1}. ${product.name} (SKU: ${product.sku}) - Qty: ${product.quantity} @ $${product.price}`, 25, y);
+        doc.text(`${index + 1}. ${product.name} (SKU: ${product.sku}) - Qty: ${product.quantity} @ \u20B9${product.price}`, 25, y);
         y += 6;
     });
 
