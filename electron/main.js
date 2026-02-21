@@ -331,7 +331,7 @@ if (!gotTheLock) {
                 console.log('Update downloaded:', info.version);
                 splashWindow?.webContents.send('update-message', 'Update downloaded. Restarting...');
                 setTimeout(() => {
-                    autoUpdater.quitAndInstall();
+                    autoUpdater.quitAndInstall(true, true);
                 }, 1500);
             });
 
