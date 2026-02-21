@@ -5,7 +5,7 @@ import {
     Package, ShoppingCart, AlertTriangle, TrendingUp,
     Users, Scale, BarChart3, FileText, ArrowRight,
     Search, Plus, Hash, User, Calendar, CreditCard, Clock, CheckCircle2,
-    ArrowUpRight, Boxes
+    ArrowUpRight, Boxes, Lock
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatCurrency, formatRelativeTime, getStatusColor, getStatusLabel } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Dashboard() {
     const navigate = useNavigate();

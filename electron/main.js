@@ -323,7 +323,7 @@ if (!gotTheLock) {
                 log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
                 console.log(log_message);
 
-                splashWindow?.webContents.send('update-message', `Downloading update... ${progressObj.percent.toFixed(0)}%`);
+                splashWindow?.webContents.send('update-message', `Downloading update...`);
                 splashWindow?.webContents.send('download-progress', progressObj.percent);
             });
 
