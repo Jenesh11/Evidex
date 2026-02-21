@@ -275,23 +275,9 @@ if (!gotTheLock) {
                 autoUpdater.requestHeaders = { "Authorization": `token ${GH_TOKEN}` };
             }
 
-            // Configure auto-updater
-            autoUpdater.autoDownload = false; // Don't auto-download during runtime checks
-            autoUpdater.autoInstallOnAppQuit = true; // Install when app quits
-
-            // Handle token from renderer (for private repos)
-            ipcMain.on('update-token', (event, token) => {
-                if (token) {
-                    console.log('[Auto-Update] Received token for private repo');
-                    autoUpdater.requestHeaders = { "Authorization": `token ${token}` };
-                    // Retry check immediately
-                    autoUpdater.checkForUpdatesAndNotify().catch(err => {
-                        console.error('[Auto-Update] Retry check failed:', err);
-                        // If it fails again, ensure splash closes? 
-                        // Actually, allowing splash to timeout is safer if this fails.
-                    });
-                }
-            });
+            // Configure auto-updater - public repo, no token needed for downloads
+            autoUpdater.autoDownload = false;
+            autoUpdater.autoInstallOnAppQuit = true;
 
             // Notify splash we are checking
             splashWindow.webContents.on('did-finish-load', () => {
@@ -313,7 +299,8 @@ if (!gotTheLock) {
                 // Only check after splash loads
                 autoUpdater.checkForUpdatesAndNotify().catch(err => {
                     console.error('Update check failed:', err);
-                    closeSplashAndShowMain();
+                    splashWindow?.webContents.send('update-message', 'Starting application...');
+                    setTimeout(closeSplashAndShowMain, 1000);
                 });
             });
 
@@ -324,7 +311,7 @@ if (!gotTheLock) {
 
             autoUpdater.on('update-available', (info) => {
                 console.log('Update available:', info.version);
-                splashWindow?.webContents.send('update-message', 'Update found. Downloading...');
+                splashWindow?.webContents.send('update-message', `Update v${info.version} found. Downloading...`);
             });
 
             autoUpdater.on('update-not-available', () => {
@@ -334,8 +321,8 @@ if (!gotTheLock) {
             });
 
             autoUpdater.on('error', (err) => {
-                console.error('AutoUpdate Error:', err);
-                splashWindow?.webContents.send('update-message', 'Error checking updates. Skipping...');
+                console.error('AutoUpdate Error:', err?.message || err);
+                splashWindow?.webContents.send('update-message', 'Starting application...');
                 setTimeout(closeSplashAndShowMain, 1500);
             });
 

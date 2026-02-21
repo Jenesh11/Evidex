@@ -39,6 +39,7 @@ jobs:
         with:
           files: |
             dist-electron/*.exe
+            dist-electron/*.exe.blockmap
             dist-electron/latest.yml
           generate_release_notes: true
           draft: false
