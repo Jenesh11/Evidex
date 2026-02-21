@@ -3,14 +3,14 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*.*.*'
+
+permissions:
+  contents: write
 
 jobs:
   release:
     runs-on: windows-latest
-
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout Code
@@ -19,19 +19,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '18'
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
+
+      - name: Rebuild native modules for Electron
+        run: npm run rebuild
+        continue-on-error: true
 
       - name: Build and Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_GH_TOKEN: ${{ secrets.VITE_GH_TOKEN }}
         run: |
-          sed -i 's/{{GH_TOKEN}}/${{ secrets.VITE_GH_TOKEN }}/g' electron/main.js
           npm run build
           npx electron-builder --win --publish always
