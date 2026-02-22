@@ -170,7 +170,7 @@ export default function Pricing() {
         <>
             <Helmet>
                 <title>Pricing - EvidEx</title>
-                <meta name="description" content="EvidEx pricing plans. Start with a 7-day free trial. Starter plan at ₹999 and Pro plan at ₹2,499." />
+                <meta name="description" content="EvidEx pricing plans. Start with a 7-day free trial. Starter plan at ₹499 and Pro plan at ₹1,999." />
             </Helmet>
 
             <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
