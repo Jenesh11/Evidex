@@ -1,11 +1,64 @@
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Check, X, Download, Sparkles, Zap, Crown } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 
 export default function Pricing() {
+    const navigate = useNavigate();
+    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [customerDetails, setCustomerDetails] = useState({
+        customer_name: '',
+        customer_email: '',
+        customer_phone: ''
+    });
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState(null);
+    const [cashfree, setCashfree] = useState(null);
+
+    useEffect(() => {
+        // Initialize Cashfree
+        if (window.Cashfree) {
+            setCashfree(window.Cashfree({
+                mode: import.meta.env.VITE_CASHFREE_MODE || "sandbox"
+            }));
+        }
+    }, []);
+
+    const handleCheckout = async (e) => {
+        e.preventDefault();
+        if (!selectedPlan || !cashfree) return;
+
+        setIsProcessing(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plan_type: selectedPlan.name.toUpperCase(),
+                    customer_details: customerDetails
+                })
+            });
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            // Initiate Payment
+            await cashfree.checkout({
+                paymentSessionId: data.payment_session_id,
+                redirectTarget: "_self"
+            });
+
+        } catch (err) {
+            console.error('Checkout failed:', err);
+            setError(err.message || 'Payment initiation failed. Please try again.');
+            setIsProcessing(false);
+        }
+    };
     const plans = [
         {
             name: 'Starter',
@@ -113,15 +166,26 @@ export default function Pricing() {
                                 </div>
                             </CardHeader>
                             <CardContent className="relative">
-                                <Link to="/download">
+                                {plan.name === 'Starter' || plan.name === 'Pro' ? (
                                     <Button
                                         className={`w-full mb-6 ${plan.popular ? 'btn-gradient btn-glow' : ''}`}
                                         variant={plan.popular ? 'default' : 'outline'}
                                         size="lg"
+                                        onClick={() => setSelectedPlan(plan)}
                                     >
-                                        Start Free Trial
+                                        Buy Now
                                     </Button>
-                                </Link>
+                                ) : (
+                                    <Link to="/download">
+                                        <Button
+                                            className={`w-full mb-6 ${plan.popular ? 'btn-gradient btn-glow' : ''}`}
+                                            variant={plan.popular ? 'default' : 'outline'}
+                                            size="lg"
+                                        >
+                                            Start Free Trial
+                                        </Button>
+                                    </Link>
+                                )}
                                 <ul className="space-y-4">
                                     {plan.features.map((feature, index) => (
                                         <li key={index} className="flex items-start gap-3">
@@ -200,6 +264,82 @@ export default function Pricing() {
                         ))}
                     </div>
                 </section>
+                {/* Checkout Modal */}
+                {selectedPlan && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in">
+                        <Card className="w-full max-w-md card-glow relative">
+                            <button
+                                onClick={() => setSelectedPlan(null)}
+                                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
+                            <CardHeader>
+                                <CardTitle>Checkout: {selectedPlan.name} Plan</CardTitle>
+                                <CardDescription>Enter your details to proceed to payment</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleCheckout} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Full Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            placeholder="John Doe"
+                                            className="w-full p-2.5 rounded-lg bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            value={customerDetails.customer_name}
+                                            onChange={(e) => setCustomerDetails({ ...customerDetails, customer_name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Email Address</label>
+                                        <input
+                                            type="email"
+                                            required
+                                            placeholder="john@example.com"
+                                            className="w-full p-2.5 rounded-lg bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            value={customerDetails.customer_email}
+                                            onChange={(e) => setCustomerDetails({ ...customerDetails, customer_email: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Phone Number</label>
+                                        <input
+                                            type="tel"
+                                            required
+                                            pattern="[0-9]{10}"
+                                            placeholder="9876543210"
+                                            className="w-full p-2.5 rounded-lg bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            value={customerDetails.customer_phone}
+                                            onChange={(e) => setCustomerDetails({ ...customerDetails, customer_phone: e.target.value })}
+                                        />
+                                        <p className="text-[10px] text-muted-foreground">10-digit mobile number for payment updates</p>
+                                    </div>
+
+                                    {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
+
+                                    <Button
+                                        type="submit"
+                                        disabled={isProcessing}
+                                        className="w-full btn-gradient py-6 text-lg"
+                                    >
+                                        {isProcessing ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                Processing...
+                                            </div>
+                                        ) : (
+                                            `Pay ${selectedPlan.price}`
+                                        )}
+                                    </Button>
+                                    <p className="text-[10px] text-center text-muted-foreground">
+                                        Secure payment via Cashfree PG. License code will be sent to your email.
+                                    </p>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
             </div>
         </>
     );
