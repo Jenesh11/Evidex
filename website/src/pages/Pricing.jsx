@@ -112,7 +112,7 @@ export default function Pricing() {
     const plans = [
         {
             name: 'Starter',
-            price: '₹1',
+            price: '₹499',
             description: 'For small sellers and single PC setups',
             icon: Zap,
             gradient: 'from-cyan-500 to-blue-500',
@@ -129,7 +129,7 @@ export default function Pricing() {
         },
         {
             name: 'Pro',
-            price: '₹1',
+            price: '₹1,999',
             description: 'For growing businesses',
             popular: true,
             icon: Crown,
@@ -272,29 +272,6 @@ export default function Pricing() {
                     </Card>
                 </section>
 
-                {/* Payment Info */}
-                <section className="mb-16 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                    <Card className="card-hover">
-                        <CardHeader>
-                            <CardTitle className="text-2xl">Payment & Activation</CardTitle>
-                            <CardDescription className="text-base">How to activate your subscription</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <p className="text-muted-foreground leading-relaxed">
-                                After your trial ends, you'll need to purchase a license code to continue using EvidEx.
-                                License codes can be purchased through our payment gateway (coming soon) or by contacting
-                                our sales team.
-                            </p>
-                            <p className="text-muted-foreground leading-relaxed">
-                                Once you have a license code, simply enter it in the app's Pricing page to activate
-                                your subscription. Your subscription will be valid for one month from activation.
-                            </p>
-                            <div className="pt-4">
-                                <Badge variant="outline" className="text-sm">Payment Gateway Coming Soon</Badge>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </section>
 
                 {/* FAQ */}
                 <section className="animate-fade-in" style={{ animationDelay: '0.4s' }}>

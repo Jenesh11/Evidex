@@ -76,12 +76,12 @@ export default async function handler(req, res) {
             return res.status(200).json({
                 success: true,
                 code: existingLicense.code,
-                plan: order.order_amount >= 2499 ? 'PRO' : 'STARTER'
+                plan: order.order_amount >= 1999 ? 'PRO' : 'STARTER'
             });
         }
 
         // 4. Determine Plan Type
-        const planType = order.order_amount >= 2499 ? 'PRO' : 'STARTER';
+        const planType = order.order_amount >= 1999 ? 'PRO' : 'STARTER';
         const licenseCode = generateLicenseCode(planType);
 
         // 5. Store in Supabase
