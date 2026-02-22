@@ -16,6 +16,7 @@ export default function Pricing() {
     });
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
+    const [cashfree, setCashfree] = useState(null);
     const [isAdBlockerActive, setIsAdBlockerActive] = useState(false);
     const [isSdkBlocked, setIsSdkBlocked] = useState(false);
 
