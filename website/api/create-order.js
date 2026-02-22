@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     }
 
     // Set price based on plan
-    const amount = plan_type === 'PRO' ? 1999 : 499;
+    const amount = plan_type === 'PRO' ? 1999 : 1;
     const orderId = `EVX_${Date.now()}`;
 
     try {
