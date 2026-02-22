@@ -4,8 +4,8 @@ import { PLANS } from './plans';
 export const PLAN_FEATURES = {
     [PLANS.STARTER]: {
         name: 'Starter',
-        price: 999,
-        yearlyPrice: 9990, // ~₹833/month
+        price: 499,
+        yearlyPrice: 4990, // ~₹415/month
         features: [
             '1 PC license',
             'Packing camera recording',
@@ -19,8 +19,8 @@ export const PLAN_FEATURES = {
     },
     [PLANS.PRO]: {
         name: 'Pro',
-        price: 2499,
-        yearlyPrice: 24990, // ~₹2,082/month
+        price: 1999,
+        yearlyPrice: 19990, // ~₹1,665/month
         features: [
             'Everything in Starter',
             'Multiple staff accounts',

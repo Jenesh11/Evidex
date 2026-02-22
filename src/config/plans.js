@@ -7,8 +7,8 @@ export const PLANS = {
 export const PLAN_FEATURES = {
     [PLANS.STARTER]: {
         name: 'Starter',
-        price: 999,
-        yearlyPrice: 9999,
+        price: 499,
+        yearlyPrice: 4990,
         description: 'For small sellers and single PC setups',
         features: [
             'packing_camera',
@@ -31,8 +31,8 @@ export const PLAN_FEATURES = {
     },
     [PLANS.PRO]: {
         name: 'Pro',
-        price: 2499,
-        yearlyPrice: 24999,
+        price: 1999,
+        yearlyPrice: 19990,
         description: 'Recommended for growing businesses',
         recommended: true,
         features: [
