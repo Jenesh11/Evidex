@@ -11,8 +11,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Set price based on plan
-    const amount = plan_type === 'PRO' ? 2499 : 999;
+    // Set price based on plan (SET TO 1 FOR TESTING)
+    const amount = 1; // plan_type === 'PRO' ? 2499 : 999;
     const orderId = `EVX_${Date.now()}`;
 
     try {

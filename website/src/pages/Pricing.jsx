@@ -112,7 +112,7 @@ export default function Pricing() {
     const plans = [
         {
             name: 'Starter',
-            price: '₹999',
+            price: '₹1',
             description: 'For small sellers and single PC setups',
             icon: Zap,
             gradient: 'from-cyan-500 to-blue-500',
@@ -129,7 +129,7 @@ export default function Pricing() {
         },
         {
             name: 'Pro',
-            price: '₹2,499',
+            price: '₹1',
             description: 'For growing businesses',
             popular: true,
             icon: Crown,
