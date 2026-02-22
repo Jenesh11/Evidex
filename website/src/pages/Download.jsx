@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import { Badge } from '../components/ui/Badge';
 
 export default function DownloadPage() {
-    const version = '1.0.23';
+    const version = '1.0.24';
     const releaseDate = 'February 2026';
 
     const installationSteps = [
@@ -62,7 +62,7 @@ export default function DownloadPage() {
                         <Button
                             size="lg"
                             className="btn-gradient btn-glow w-full sm:w-auto text-xl px-12 py-8 h-auto mb-6"
-                            onClick={() => window.location.href = 'https://github.com/Jenesh11/Evidex/releases/download/v1.0.23/Evidex-Setup-1.0.23.exe'}
+                            onClick={() => window.location.href = 'https://github.com/Jenesh11/Evidex/releases/download/v1.0.24/Evidex-Setup-1.0.24.exe'}
                         >
                             <Download className="mr-3 h-6 w-6" />
                             Download EvidEx for Windows
