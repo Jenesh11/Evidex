@@ -19,17 +19,31 @@ export default function Pricing() {
     const [cashfree, setCashfree] = useState(null);
 
     useEffect(() => {
-        // Initialize Cashfree
-        if (window.Cashfree) {
-            setCashfree(window.Cashfree({
-                mode: import.meta.env.VITE_CASHFREE_MODE || "sandbox"
-            }));
+        const initCashfree = () => {
+            if (window.Cashfree) {
+                const mode = import.meta.env.VITE_CASHFREE_MODE || "sandbox";
+                console.log('Initializing Cashfree in mode:', mode);
+                setCashfree(window.Cashfree({ mode }));
+                return true;
+            }
+            return false;
+        };
+
+        if (!initCashfree()) {
+            const interval = setInterval(() => {
+                if (initCashfree()) clearInterval(interval);
+            }, 500);
+            return () => clearInterval(interval);
         }
     }, []);
 
     const handleCheckout = async (e) => {
         e.preventDefault();
-        if (!selectedPlan || !cashfree) return;
+        if (!selectedPlan) return;
+        if (!cashfree) {
+            setError("Payment system still loading. Please wait a moment.");
+            return;
+        }
 
         setIsProcessing(true);
         setError(null);
