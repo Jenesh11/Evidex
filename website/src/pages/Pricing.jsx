@@ -16,14 +16,28 @@ export default function Pricing() {
     });
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
-    const [cashfree, setCashfree] = useState(null);
+    const [isAdBlockerActive, setIsAdBlockerActive] = useState(false);
+    const [isSdkBlocked, setIsSdkBlocked] = useState(false);
 
     useEffect(() => {
+        // Detect general ad-blockers
+        const detectAdBlocker = async () => {
+            try {
+                const url = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+                await fetch(url, { mode: 'no-cors' });
+            } catch (err) {
+                console.warn('Ad-blocker detected');
+                setIsAdBlockerActive(true);
+            }
+        };
+        detectAdBlocker();
+
         const initCashfree = () => {
             if (window.Cashfree) {
                 const mode = import.meta.env.VITE_CASHFREE_MODE || "sandbox";
                 console.log('Initializing Cashfree in mode:', mode);
                 setCashfree(window.Cashfree({ mode }));
+                setIsSdkBlocked(false);
                 return true;
             }
             return false;
@@ -31,9 +45,23 @@ export default function Pricing() {
 
         if (!initCashfree()) {
             const interval = setInterval(() => {
-                if (initCashfree()) clearInterval(interval);
+                if (initCashfree()) {
+                    clearInterval(interval);
+                }
             }, 500);
-            return () => clearInterval(interval);
+
+            // If still not loaded after 5 seconds, it's likely blocked
+            const timeout = setTimeout(() => {
+                if (!window.Cashfree) {
+                    setIsSdkBlocked(true);
+                    clearInterval(interval);
+                }
+            }, 5000);
+
+            return () => {
+                clearInterval(interval);
+                clearTimeout(timeout);
+            };
         }
     }, []);
 
@@ -336,6 +364,16 @@ export default function Pricing() {
                                         />
                                         <p className="text-[10px] text-muted-foreground">10-digit mobile number for payment updates</p>
                                     </div>
+
+                                    {isSdkBlocked && (
+                                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
+                                            <div className="flex items-center gap-2 mb-1 font-bold">
+                                                <X className="h-4 w-4" />
+                                                Payment System Blocked
+                                            </div>
+                                            Your browser is blocking the payment system. Please disable **Brave Shields** or **Ad-Blockers** for this site and refresh the page to proceed.
+                                        </div>
+                                    )}
 
                                     {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
 
