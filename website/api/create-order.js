@@ -16,8 +16,9 @@ export default async function handler(req, res) {
     const orderId = `EVX_${Date.now()}`;
 
     try {
+        const baseUrl = process.env.CASHFREE_BASE_URL.replace(/\/+$/, '');
         const cashfreeResponse = await axios.post(
-            `${process.env.CASHFREE_BASE_URL}/orders`,
+            `${baseUrl}/orders`,
             {
                 order_id: orderId,
                 order_amount: amount,

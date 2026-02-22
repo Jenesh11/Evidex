@@ -44,8 +44,15 @@ export default function Pricing() {
                 })
             });
 
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                const errorMessage = errorData.details
+                    ? `${errorData.error}: ${errorData.details}`
+                    : (errorData.error || `Server error: ${response.status}`);
+                throw new Error(errorMessage);
+            }
+
             const data = await response.json();
-            if (data.error) throw new Error(data.error);
 
             // Initiate Payment
             await cashfree.checkout({
