@@ -20,7 +20,10 @@ export default async function handler(req, res) {
     }
 
     try {
-        const baseUrl = process.env.CASHFREE_BASE_URL.replace(/\/+$/, '');
+        const baseUrl = process.env.CASHFREE_BASE_URL ? process.env.CASHFREE_BASE_URL.replace(/\/+$/, '') : 'https://api.cashfree.com/pg';
+
+        console.log(`Verifying order: ${order_id} at ${baseUrl}`);
+
         // 1. Verify Payment with Cashfree
         const cashfreeResponse = await axios.get(
             `${baseUrl}/orders/${order_id}`,
@@ -31,36 +34,53 @@ export default async function handler(req, res) {
                     'x-api-version': '2023-08-01'
                 }
             }
-        );
+        ).catch(err => {
+            console.error('Cashfree API Error:', err.response?.data || err.message);
+            throw new Error(`Cashfree Error: ${err.response?.data?.message || err.message}`);
+        });
 
         const order = cashfreeResponse.data;
+        console.log(`Order status for ${order_id}: ${order.order_status}`);
 
         if (order.order_status !== 'PAID') {
             return res.status(400).json({
-                error: 'Payment not completed',
+                error: `Payment status is ${order.order_status}. Please wait a moment or contact support if you have already paid.`,
                 status: order.order_status
             });
         }
 
-        // 2. Initialize Supabase with Service Role Key (Admin)
+        // 2. Initialize Supabase
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            console.error('Missing SUPABASE_SERVICE_ROLE_KEY');
+            throw new Error('Server configuration error: Missing Supabase key');
+        }
+
         const supabase = createClient(
             process.env.VITE_SUPABASE_URL,
             process.env.SUPABASE_SERVICE_ROLE_KEY
         );
 
-        // 3. Check if license already generated for this order to prevent duplicates
-        const { data: existingLicense } = await supabase
+        // 3. Check if license already generated
+        const { data: existingLicense, error: fetchError } = await supabase
             .from('license_codes')
             .select('code')
             .eq('order_id', order_id)
-            .single();
+            .maybeSingle();
 
-        if (existingLicense) {
-            return res.status(200).json({ code: existingLicense.code });
+        if (fetchError) {
+            console.error('Supabase Query Error:', fetchError);
+            throw new Error(`Database Error: ${fetchError.message}`);
         }
 
-        // 4. Determine Plan Type from Order ID or amount
-        // In create-order we set amount to 2499 for PRO
+        if (existingLicense) {
+            return res.status(200).json({
+                success: true,
+                code: existingLicense.code,
+                plan: order.order_amount >= 2499 ? 'PRO' : 'STARTER'
+            });
+        }
+
+        // 4. Determine Plan Type
         const planType = order.order_amount >= 2499 ? 'PRO' : 'STARTER';
         const licenseCode = generateLicenseCode(planType);
 
@@ -72,13 +92,13 @@ export default async function handler(req, res) {
                 plan_type: planType,
                 order_id: order_id,
                 customer_email: order.customer_details.customer_email,
-                duration_months: 1, // Default to 1 month
+                duration_months: 1,
                 is_used: false
             });
 
         if (insertError) {
             console.error('Supabase Insert Error:', insertError);
-            throw new Error('Failed to store license code');
+            throw new Error(`Database Insert Error: ${insertError.message}`);
         }
 
         return res.status(200).json({
@@ -88,9 +108,9 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        console.error('Verification Error:', error.response?.data || error.message);
+        console.error('Verification Error:', error.message);
         return res.status(500).json({
-            error: 'Failed to verify payment',
+            error: error.message || 'Failed to verify payment',
             details: error.message
         });
     }
