@@ -17,6 +17,7 @@ export default async function handler(req, res) {
 
     try {
         const baseUrl = process.env.CASHFREE_BASE_URL.replace(/\/+$/, '');
+        const websiteUrl = process.env.WEBSITE_URL.replace(/\/+$/, '');
         const cashfreeResponse = await axios.post(
             `${baseUrl}/orders`,
             {
@@ -30,8 +31,8 @@ export default async function handler(req, res) {
                     customer_name: customer_details.customer_name || 'Evidex Customer'
                 },
                 order_meta: {
-                    return_url: `${process.env.WEBSITE_URL}/order-success?order_id={order_id}`,
-                    notify_url: `${process.env.WEBSITE_URL}/api/cashfree-webhook`
+                    return_url: `${websiteUrl}/order-success?order_id={order_id}`,
+                    notify_url: `${websiteUrl}/api/cashfree-webhook`
                 },
                 order_note: `License for Evidex ${plan_type} Plan`
             },

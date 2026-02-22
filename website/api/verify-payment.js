@@ -20,9 +20,10 @@ export default async function handler(req, res) {
     }
 
     try {
+        const baseUrl = process.env.CASHFREE_BASE_URL.replace(/\/+$/, '');
         // 1. Verify Payment with Cashfree
         const cashfreeResponse = await axios.get(
-            `${process.env.CASHFREE_BASE_URL}/orders/${order_id}`,
+            `${baseUrl}/orders/${order_id}`,
             {
                 headers: {
                     'x-client-id': process.env.CASHFREE_APP_ID,
