@@ -1,204 +1,176 @@
 import { Helmet } from 'react-helmet-async';
-import { Mail, MessageSquare, HelpCircle, Send, Phone, Clock } from 'lucide-react';
+import {
+    Mail,
+    MessageSquare,
+    HelpCircle,
+    Send,
+    Phone,
+    Clock,
+    ArrowRight,
+    MessageCircle,
+    CheckCircle2
+} from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 
 export default function Support() {
     const faqs = [
         {
             question: 'How do I activate my license?',
-            answer: 'Go to the Pricing page in the app, enter your license code, and click "Claim License". Your subscription will be activated immediately.',
+            answer: 'After checkout, you will receive a license code via email. Launch the EvidEx desktop app, go to Settings > License, and enter your code to activate your 30-day term.',
         },
         {
-            question: 'Can I use EvidEx on multiple computers?',
-            answer: 'Each license is valid for one computer. Contact us for multi-device licensing options.',
+            question: 'Is my video data uploaded anywhere?',
+            answer: 'No. EvidEx is a "Local First" application. Your evidence remains on your hardware. We only store the cryptographic hash (SHA-256) for verification purposes.',
         },
         {
-            question: 'How do I backup my data?',
-            answer: 'Pro users have automatic backups enabled. Starter users can manually create backups from the Settings page.',
+            question: 'Can I use one license on multiple stations?',
+            answer: 'Standard licenses are per-device. For multi-station warehouse setups, please contact our Sales team for site-wide volume licensing.',
         },
         {
-            question: 'What if a video shows as tampered?',
-            answer: 'If a video file is modified after recording, EvidEx will detect it and mark it as invalid. The original hash is stored in the database for verification.',
-        },
-        {
-            question: 'Can I export my data?',
-            answer: 'Yes, you can export evidence packages as ZIP files (Pro plan) or manually backup your database from Settings.',
-        },
-        {
-            question: 'Do you offer training or onboarding?',
-            answer: 'Pro plan users get priority support. Contact us for personalized training sessions.',
+            question: 'What if my internet goes down?',
+            answer: 'EvidEx records offline. The application only requires an occasional heartbeat connection to verify license status.',
         },
     ];
 
-    const contactOptions = [
+    const contactMethods = [
         {
             icon: Mail,
-            title: 'Email Support',
-            description: 'Get help via email. We typically respond within 24 hours.',
+            title: 'Technical Support',
+            description: 'For bugs, installation issues, or technical queries.',
             action: 'support@evidex.in',
             href: 'mailto:support@evidex.in',
-            gradient: 'from-blue-500 to-cyan-500',
+            color: 'text-primary'
+        },
+        {
+            icon: MessageCircle,
+            title: 'Priority WhatsApp',
+            description: 'Fastest response for Pro plan users in India.',
+            action: 'Chat on WhatsApp',
+            href: 'https://wa.me/91XXXXXXXXXX',
+            color: 'text-emerald-500'
         },
         {
             icon: Phone,
-            title: 'Phone Support',
-            description: 'Talk to our support team directly during business hours.',
-            action: 'Call Us',
-            gradient: 'from-green-500 to-emerald-500',
-        },
-        {
-            icon: Clock,
-            title: 'Live Chat',
-            description: 'Chat with our team in real-time for quick assistance.',
-            action: 'Start Chat',
-            gradient: 'from-purple-500 to-pink-500',
-        },
+            title: 'Sales Inquiry',
+            description: 'Speak to an expert about bulk warehouse setups.',
+            action: '+91 (0) XXX-XXX-XXXX',
+            color: 'text-brand-deep'
+        }
     ];
 
     return (
-        <>
+        <div className="bg-brand-mesh min-h-screen pt-32 pb-24">
             <Helmet>
-                <title>Support - EvidEx</title>
-                <meta name="description" content="Get help with EvidEx. Contact support, view FAQ, and find answers to common questions." />
+                <title>Support | Professional Assistance for Your Business</title>
+                <meta name="description" content="Need help with EvidEx? Access our expert support team, browse the documentation, or find quick answers in our FAQ." />
             </Helmet>
 
-            <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-                {/* Header */}
-                <div className="mx-auto max-w-2xl text-center mb-16 animate-fade-in">
-                    <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-6">
-                        How can we <span className="gradient-text">help?</span>
-                    </h1>
-                    <p className="text-lg sm:text-xl text-muted-foreground">
-                        Get in touch with our support team or browse our FAQ
-                    </p>
+            <div className="container-wide">
+                {/* --- HEADER --- */}
+                <div className="asymmetric-grid items-center mb-24">
+                    <div className="animate-fade-in">
+                        <span className="text-primary font-bold uppercase tracking-widest text-xs mb-4 block">Human-Focused Support</span>
+                        <h1 className="text-5xl lg:text-7xl font-bold leading-tight mb-8">
+                            We've got <span className="highlight-blue">your back.</span>
+                        </h1>
+                        <p className="text-xl text-muted-foreground leading-relaxed max-w-xl">
+                            Whether you're troubleshooting a camera setup or scaling to a ten-station warehouse, our specialized team is ready to assist.
+                        </p>
+                    </div>
+                    <div className="relative group lg:translate-x-12">
+                        <div className="relative z-10 p-4 bg-white/[0.03] backdrop-blur-2xl rounded-[2.5rem] border border-white/10 shadow-2xl">
+                            <div className="bg-brand-deep/80 rounded-[2rem] p-10 flex flex-col justify-end aspect-square md:aspect-video text-white border border-white/5">
+                                <Clock className="w-12 h-12 text-primary mb-6" />
+                                <div className="text-2xl font-bold mb-2">Support Hours</div>
+                                <div className="text-white/60 font-medium italic">Mon – Sat, 9:00 AM – 7:00 PM IST</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Contact Options */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 max-w-6xl mx-auto">
-                    {contactOptions.map((option, index) => (
-                        <Card
-                            key={index}
-                            className="card-hover card-glow group animate-fade-in"
-                            style={{ animationDelay: `${index * 0.1}s` }}
-                        >
-                            <CardContent className="p-8 text-center">
-                                <div className={`inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${option.gradient} mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                    <option.icon className="h-8 w-8 text-white" />
+                {/* --- CONTACT CARDS --- */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
+                    {contactMethods.map((m, i) => (
+                        <div key={i} className="card-pro group flex flex-col justify-between">
+                            <div>
+                                <div className={`w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center ${m.color} mb-8 group-hover:scale-110 transition-transform duration-500`}>
+                                    <m.icon className="w-7 h-7" />
                                 </div>
-                                <h3 className="text-xl font-semibold mb-3">{option.title}</h3>
-                                <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                                    {option.description}
-                                </p>
-                                {option.href ? (
-                                    <a href={option.href}>
-                                        <Button variant="outline" className="w-full hover:bg-primary/10">
-                                            {option.action}
-                                        </Button>
-                                    </a>
-                                ) : (
-                                    <Button variant="outline" className="w-full hover:bg-primary/10">
-                                        {option.action}
-                                    </Button>
-                                )}
-                            </CardContent>
-                        </Card>
+                                <h3 className="text-xl font-bold mb-3">{m.title}</h3>
+                                <p className="text-muted-foreground text-sm leading-relaxed mb-8 italic">{m.description}</p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                className="w-full btn-pro-outline font-bold tracking-tight"
+                                onClick={() => m.href && window.open(m.href, '_blank')}
+                            >
+                                {m.action}
+                            </Button>
+                        </div>
                     ))}
                 </div>
 
-                {/* Contact Form */}
-                <section className="mb-16 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                    <Card className="card-hover card-glow">
-                        <CardHeader>
-                            <CardTitle className="text-2xl">Send us a message</CardTitle>
-                            <CardDescription className="text-base">
-                                Fill out the form below and we'll get back to you as soon as possible
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form className="space-y-6">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div>
-                                        <label htmlFor="name" className="block text-sm font-medium mb-2">
-                                            Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="name"
-                                            className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                                            placeholder="Your name"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="email" className="block text-sm font-medium mb-2">
-                                            Email
-                                        </label>
-                                        <input
-                                            type="email"
-                                            id="email"
-                                            className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                                            placeholder="your@email.com"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label htmlFor="subject" className="block text-sm font-medium mb-2">
-                                        Subject
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="subject"
-                                        className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                                        placeholder="How can we help?"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="message" className="block text-sm font-medium mb-2">
-                                        Message
-                                    </label>
-                                    <textarea
-                                        id="message"
-                                        rows={6}
-                                        className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none transition-all"
-                                        placeholder="Tell us more about your question or issue..."
-                                    />
-                                </div>
-                                <Button type="submit" className="w-full btn-gradient btn-glow" size="lg">
-                                    <Send className="mr-2 h-5 w-5" />
-                                    Send Message
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
-                </section>
-
-                {/* FAQ */}
-                <section className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                    <div className="text-center mb-12">
-                        <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 mx-auto mb-6 shadow-lg">
-                            <HelpCircle className="h-8 w-8 text-white" />
-                        </div>
-                        <h2 className="text-3xl font-bold mb-4">
-                            Frequently Asked <span className="gradient-text">Questions</span>
-                        </h2>
-                        <p className="text-muted-foreground text-lg">
-                            Quick answers to common questions
+                {/* --- MESSAGE FORM --- */}
+                <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-start mb-32">
+                    <div>
+                        <h2 className="text-3xl font-bold mb-8">Send a Detailed Inquiry</h2>
+                        <p className="text-muted-foreground leading-relaxed mb-8">
+                            For complex setup issues, please provide as much detail as possible about your hardware (Camera model, Windows version).
                         </p>
+                        <ul className="space-y-4">
+                            <li className="flex items-center gap-3 text-sm font-bold">
+                                <CheckCircle2 className="w-4 h-4 text-primary" />
+                                <span>Typical Response: &lt; 4 Hours</span>
+                            </li>
+                            <li className="flex items-center gap-3 text-sm font-bold">
+                                <CheckCircle2 className="w-4 h-4 text-primary" />
+                                <span>Technical Expert Assigned Directly</span>
+                            </li>
+                        </ul>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {faqs.map((faq, index) => (
-                            <Card key={index} className="card-hover">
-                                <CardHeader>
-                                    <CardTitle className="text-lg">{faq.question}</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
-                                </CardContent>
-                            </Card>
+
+                    <div className="bg-secondary/40 backdrop-blur-md p-10 rounded-[2.5rem] border border-border/40 shadow-xl space-y-6 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-primary/30" />
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Full Name</label>
+                            <input type="text" className="w-full h-14 px-6 rounded-2xl bg-brand-deep/50 border border-white/5 focus:ring-2 focus:ring-primary focus:bg-brand-deep/80 text-white transition-all outline-none font-medium" placeholder="E.g. Vikram Seth" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Email Address</label>
+                            <input type="email" className="w-full h-14 px-6 rounded-2xl bg-brand-deep/50 border border-white/5 focus:ring-2 focus:ring-primary focus:bg-brand-deep/80 text-white transition-all outline-none font-medium" placeholder="E.g. vikram@store.com" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Your Message</label>
+                            <textarea className="w-full p-6 rounded-2xl bg-brand-deep/50 border border-white/5 focus:ring-2 focus:ring-primary focus:bg-brand-deep/80 text-white transition-all outline-none font-medium min-h-[160px] resize-none" placeholder="How can we help?" />
+                        </div>
+                        <Button className="w-full h-16 text-lg btn-pro-primary">
+                            <Send className="mr-2 w-5 h-5" />
+                            Dispatch Message
+                        </Button>
+                    </div>
+                </div>
+
+                {/* --- FAQ SECTION --- */}
+                <section>
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold mb-4">Quick Answers</h2>
+                        <div className="h-1 w-12 bg-primary/20 mx-auto rounded-full" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        {faqs.map((f, i) => (
+                            <div key={i} className="card-pro bg-white/40 ring-1 ring-border/10">
+                                <h4 className="text-lg font-bold mb-3 flex items-center gap-3">
+                                    <HelpCircle className="w-5 h-5 text-primary shrink-0" />
+                                    {f.question}
+                                </h4>
+                                <p className="text-muted-foreground text-sm leading-relaxed italic border-l-2 border-primary/20 pl-4">
+                                    {f.answer}
+                                </p>
+                            </div>
                         ))}
                     </div>
                 </section>
             </div>
-        </>
+        </div>
     );
 }

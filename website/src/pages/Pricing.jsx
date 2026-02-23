@@ -1,10 +1,8 @@
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Check, X, Download, Sparkles, Zap, Crown } from 'lucide-react';
+import { Check, X, ShieldCheck, Sparkles, Zap, Crown, Mail, MessageCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 
 export default function Pricing() {
     const navigate = useNavigate();
@@ -21,7 +19,6 @@ export default function Pricing() {
     const [isSdkBlocked, setIsSdkBlocked] = useState(false);
 
     useEffect(() => {
-        // Detect general ad-blockers
         const detectAdBlocker = async () => {
             try {
                 const url = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
@@ -36,7 +33,6 @@ export default function Pricing() {
         const initCashfree = () => {
             if (window.Cashfree) {
                 const mode = import.meta.env.VITE_CASHFREE_MODE || "sandbox";
-                console.log('Initializing Cashfree in mode:', mode);
                 setCashfree(window.Cashfree({ mode }));
                 setIsSdkBlocked(false);
                 return true;
@@ -51,7 +47,6 @@ export default function Pricing() {
                 }
             }, 500);
 
-            // If still not loaded after 5 seconds, it's likely blocked
             const timeout = setTimeout(() => {
                 if (!window.Cashfree) {
                     setIsSdkBlocked(true);
@@ -96,8 +91,6 @@ export default function Pricing() {
             }
 
             const data = await response.json();
-
-            // Initiate Payment
             await cashfree.checkout({
                 paymentSessionId: data.payment_session_id,
                 redirectTarget: "_self"
@@ -109,275 +102,224 @@ export default function Pricing() {
             setIsProcessing(false);
         }
     };
+
     const plans = [
         {
             name: 'Starter',
             price: '₹1',
-            description: 'For small sellers and single PC setups',
+            rawPrice: 1,
+            description: 'For small operators needing essential protection.',
             icon: Zap,
-            gradient: 'from-cyan-500 to-blue-500',
             features: [
-                { name: '1 PC license', included: true },
-                { name: 'Packing camera recording', included: true },
-                { name: 'Packing checklist + photos', included: true },
-                { name: 'Evidence viewer (video + photos)', included: true },
-                { name: 'Basic Returns & RTO handling', included: true },
-                { name: 'Activity logs (read-only)', included: true },
-                { name: 'Local storage', included: true },
-                { name: 'Manual backup', included: true },
+                '1 PC License Activation',
+                'Packing Evidence Recording',
+                'Checksum Integrity Verification',
+                'Checklist & Photo Evidence',
+                'Basic Order History',
+                'Local Storage Only',
             ],
+            cta: 'Secure Starter Plan',
+            accent: 'primary'
         },
         {
             name: 'Pro',
             price: '₹1,999',
-            description: 'For growing businesses',
+            rawPrice: 1999,
+            description: 'For growing warehouses and high-volume sellers.',
             popular: true,
             icon: Crown,
-            gradient: 'from-purple-500 to-pink-500',
             features: [
-                { name: 'Everything in Starter', included: true },
-                { name: 'Multiple staff accounts', included: true },
-                { name: 'Inventory reconciliation', included: true },
-                { name: 'Evidence export (ZIP/PDF)', included: true },
-                { name: 'RTO & Return analytics', included: true },
-                { name: 'Courier-wise RTO tracking', included: true },
-                { name: 'Auto daily backups', included: true },
-                { name: 'Priority support', included: true },
+                'Everything in Starter',
+                'Multiple Staff Accounts',
+                'Advanced Inventory Intel',
+                'ZIP/PDF Evidence Export',
+                'Return & RTO Analytics',
+                'Auto Daily Backups',
+                'Priority Support Channel',
             ],
-        },
-    ];
-
-    const faqs = [
-        {
-            question: 'Can I upgrade or downgrade?',
-            answer: 'Yes, you can upgrade from Starter to Pro at any time. Contact support for assistance.',
-        },
-        {
-            question: 'What happens after the trial?',
-            answer: 'After 7 days, you\'ll need to activate a license code to continue using the app. Your data will be preserved.',
-        },
-        {
-            question: 'Is there a refund policy?',
-            answer: 'We offer a 7-day free trial so you can try before you buy. Contact support for refund requests.',
-        },
-        {
-            question: 'Do you offer annual plans?',
-            answer: 'Annual plans are coming soon. Contact our sales team for enterprise pricing.',
+            cta: 'Unlock Pro Power',
+            accent: 'primary'
         },
     ];
 
     return (
-        <>
+        <div className="bg-brand-mesh min-h-screen pt-32 pb-24">
             <Helmet>
-                <title>Pricing - EvidEx</title>
-                <meta name="description" content="EvidEx pricing plans. Start with a 7-day free trial. Starter plan at ₹1 and Pro plan at ₹1,999." />
+                <title>Pricing | Clear and Honest Protection for Your Business</title>
+                <meta name="description" content="Choose the EvidEx plan that fits your volume. Starter at ₹1 and Pro at ₹1,999. No hidden fees, just reliable protection." />
             </Helmet>
 
-            <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-                {/* Header */}
-                <div className="mx-auto max-w-2xl text-center mb-16 animate-fade-in">
-                    <Badge variant="success" className="mb-4 animate-pulse-glow">
-                        <Sparkles className="mr-2 h-3 w-3" />
-                        7-Day Free Trial
-                    </Badge>
-                    <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-6">
-                        Simple, <span className="gradient-text">Transparent Pricing</span>
-                    </h1>
-                    <p className="text-lg sm:text-xl text-muted-foreground">
-                        Choose the plan that's right for your business. All plans include a 7-day free trial.
+            <div className="container-wide">
+                <div className="text-center max-w-3xl mx-auto mb-20 animate-fade-in">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-6">
+                        <Sparkles className="w-3 h-3" />
+                        <span>7-Day Free Trial Included on All Plans</span>
+                    </div>
+                    <h1 className="text-4xl lg:text-6xl font-bold mb-6">Straightforward <span className="highlight-blue">Pricing</span></h1>
+                    <p className="text-xl text-muted-foreground leading-relaxed">
+                        No complex tiers. No hidden charges. Just the protection you need to scale your business safely.
                     </p>
                 </div>
 
-                {/* Pricing Cards */}
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 max-w-5xl mx-auto mb-16">
-                    {plans.map((plan, index) => (
-                        <Card
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto mb-24">
+                    {plans.map((plan) => (
+                        <div
                             key={plan.name}
-                            className={`${plan.popular ? 'border-primary shadow-2xl shadow-primary/30 scale-105' : 'card-hover'} card-glow relative overflow-hidden animate-fade-in`}
-                            style={{ animationDelay: `${index * 0.1}s` }}
+                            className={`card-pro flex flex-col justify-between relative group ${plan.popular ? 'border-primary ring-1 ring-primary/20' : ''}`}
                         >
                             {plan.popular && (
-                                <div className="absolute inset-0 gradient-vibrant opacity-5" />
-                            )}
-                            {plan.popular && (
-                                <div className="absolute top-0 right-0 px-6 py-2 bg-gradient-to-r from-primary to-primary/80 text-white text-sm font-semibold rounded-bl-2xl">
-                                    Most Popular
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-6 py-2 rounded-full shadow-lg">
+                                    Best for Growth
                                 </div>
                             )}
-                            <CardHeader className="relative">
-                                <div className={`mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${plan.gradient} shadow-lg`}>
-                                    <plan.icon className="h-7 w-7 text-white" />
+
+                            <div>
+                                <div className="flex items-center justify-between mb-8">
+                                    <div className={`p-4 rounded-2xl ${plan.popular ? 'bg-primary/10 text-primary' : 'bg-secondary text-foreground/40'}`}>
+                                        <plan.icon className="w-8 h-8" />
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-4xl font-bold tracking-tighter">{plan.price}</div>
+                                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">per month</div>
+                                    </div>
                                 </div>
-                                <CardTitle className="text-3xl">{plan.name}</CardTitle>
-                                <CardDescription className="text-base">{plan.description}</CardDescription>
-                                <div className="mt-6">
-                                    <span className="text-5xl font-bold gradient-text">{plan.price}</span>
-                                    <span className="text-muted-foreground text-lg">/month</span>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="relative">
-                                {plan.name === 'Starter' || plan.name === 'Pro' ? (
-                                    <Button
-                                        className={`w-full mb-6 ${plan.popular ? 'btn-gradient btn-glow' : ''}`}
-                                        variant={plan.popular ? 'default' : 'outline'}
-                                        size="lg"
-                                        onClick={() => setSelectedPlan(plan)}
-                                    >
-                                        Buy Now
-                                    </Button>
-                                ) : (
-                                    <Link to="/download">
-                                        <Button
-                                            className={`w-full mb-6 ${plan.popular ? 'btn-gradient btn-glow' : ''}`}
-                                            variant={plan.popular ? 'default' : 'outline'}
-                                            size="lg"
-                                        >
-                                            Start Free Trial
-                                        </Button>
-                                    </Link>
-                                )}
-                                <ul className="space-y-4">
-                                    {plan.features.map((feature, index) => (
-                                        <li key={index} className="flex items-start gap-3">
-                                            {feature.included ? (
-                                                <div className="flex-shrink-0 h-5 w-5 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mt-0.5">
-                                                    <Check className="h-3 w-3 text-white" />
-                                                </div>
-                                            ) : (
-                                                <X className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                                            )}
-                                            <span className={`${feature.included ? 'text-foreground' : 'text-muted-foreground'} text-base`}>
-                                                {feature.name}
-                                            </span>
+                                <h2 className="text-2xl font-bold mb-4">{plan.name}</h2>
+                                <p className="text-muted-foreground mb-8 leading-relaxed italic border-l-2 border-primary/20 pl-4">
+                                    {plan.description}
+                                </p>
+                                <ul className="space-y-4 mb-12">
+                                    {plan.features.map((feature, i) => (
+                                        <li key={i} className="flex items-center gap-3 text-sm font-medium">
+                                            <ShieldCheck className="w-4 h-4 text-primary" />
+                                            <span>{feature}</span>
                                         </li>
                                     ))}
                                 </ul>
-                            </CardContent>
-                        </Card>
+                            </div>
+
+                            <Button
+                                onClick={() => setSelectedPlan(plan)}
+                                className={`w-full h-16 text-lg ${plan.popular ? 'btn-pro-primary' : 'btn-pro-outline'}`}
+                            >
+                                {plan.cta}
+                            </Button>
+                        </div>
                     ))}
                 </div>
 
-                {/* Trial Info */}
-                <section className="mb-16 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                    <Card className="glass-strong card-glow relative overflow-hidden">
-                        <div className="absolute inset-0 gradient-mesh opacity-20" />
-                        <CardContent className="relative p-10 sm:p-12">
-                            <Sparkles className="h-12 w-12 text-primary mx-auto mb-6 animate-pulse" />
-                            <h2 className="text-3xl font-bold mb-4 text-center">7-Day Free Trial Included</h2>
-                            <p className="text-lg text-muted-foreground text-center max-w-2xl mx-auto">
-                                Every plan comes with a 7-day free trial. No credit card required.
-                                Try all Pro features during your trial period. Cancel anytime.
-                            </p>
-                        </CardContent>
-                    </Card>
-                </section>
-
-
-                {/* FAQ */}
-                <section className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                    <h2 className="text-3xl font-bold mb-8 text-center">
-                        Frequently Asked <span className="gradient-text">Questions</span>
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {faqs.map((faq, index) => (
-                            <Card key={index} className="card-hover">
-                                <CardHeader>
-                                    <CardTitle className="text-lg">{faq.question}</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
-                                </CardContent>
-                            </Card>
-                        ))}
+                {/* Support/Custom Quote */}
+                <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center bg-brand-deep/60 backdrop-blur-xl rounded-[2.5rem] p-12 lg:p-16 border border-white/10 shadow-2xl overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10" />
+                    <div>
+                        <h2 className="text-3xl font-bold mb-6 text-white">Need a custom enterprise solution?</h2>
+                        <p className="text-white/60 mb-8 leading-relaxed">
+                            High volume operations needing site-wide licenses, API access, or custom security audits.
+                        </p>
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center gap-3 text-sm font-bold text-white/80">
+                                <Mail className="w-4 h-4 text-primary" />
+                                <span>sales@evidex.in</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-sm font-bold text-white/80">
+                                <MessageCircle className="w-4 h-4 text-emerald-500" />
+                                <span>Priority WhatsApp Support</span>
+                            </div>
+                        </div>
                     </div>
-                </section>
-                {/* Checkout Modal */}
-                {selectedPlan && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in">
-                        <Card className="w-full max-w-md card-glow relative">
-                            <button
-                                onClick={() => setSelectedPlan(null)}
-                                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                                <X className="h-6 w-6" />
-                            </button>
-                            <CardHeader>
-                                <CardTitle>Checkout: {selectedPlan.name} Plan</CardTitle>
-                                <CardDescription>Enter your details to proceed to payment</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <form onSubmit={handleCheckout} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Full Name</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            placeholder="John Doe"
-                                            className="w-full p-2.5 rounded-lg bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                            value={customerDetails.customer_name}
-                                            onChange={(e) => setCustomerDetails({ ...customerDetails, customer_name: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Email Address</label>
-                                        <input
-                                            type="email"
-                                            required
-                                            placeholder="john@example.com"
-                                            className="w-full p-2.5 rounded-lg bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                            value={customerDetails.customer_email}
-                                            onChange={(e) => setCustomerDetails({ ...customerDetails, customer_email: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Phone Number</label>
-                                        <input
-                                            type="tel"
-                                            required
-                                            pattern="[0-9]{10}"
-                                            placeholder="9876543210"
-                                            className="w-full p-2.5 rounded-lg bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                            value={customerDetails.customer_phone}
-                                            onChange={(e) => setCustomerDetails({ ...customerDetails, customer_phone: e.target.value })}
-                                        />
-                                        <p className="text-[10px] text-muted-foreground">10-digit mobile number for payment updates</p>
-                                    </div>
-
-                                    {isSdkBlocked && (
-                                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
-                                            <div className="flex items-center gap-2 mb-1 font-bold">
-                                                <X className="h-4 w-4" />
-                                                Payment System Blocked
-                                            </div>
-                                            Your browser is blocking the payment system. Please disable **Brave Shields** or **Ad-Blockers** for this site and refresh the page to proceed.
-                                        </div>
-                                    )}
-
-                                    {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
-
-                                    <Button
-                                        type="submit"
-                                        disabled={isProcessing}
-                                        className="w-full btn-gradient py-6 text-lg"
-                                    >
-                                        {isProcessing ? (
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                Processing...
-                                            </div>
-                                        ) : (
-                                            `Pay ${selectedPlan.price}`
-                                        )}
-                                    </Button>
-                                    <p className="text-[10px] text-center text-muted-foreground">
-                                        Secure payment via Cashfree PG. License code will be sent to your email.
-                                    </p>
-                                </form>
-                            </CardContent>
-                        </Card>
+                    <div className="p-8 bg-white/5 rounded-3xl border border-white/5 shadow-inner">
+                        <blockquote className="text-lg italic leading-relaxed mb-6 text-white/70">
+                            "The Pro plan's RTO analytics saved us over ₹40,000 in just the first two months of implementation."
+                        </blockquote>
+                        <div className="font-bold text-primary">Nitin K. — Warehouse Head</div>
                     </div>
-                )}
+                </div>
             </div>
-        </>
+
+            {/* MODAL - Checkout */}
+            {selectedPlan && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
+                    <div className="absolute inset-0 bg-brand-deep/80 backdrop-blur-sm" onClick={() => setSelectedPlan(null)} />
+                    <div className="relative bg-brand-deep w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl animate-fade-in overflow-hidden border border-white/10">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
+                        <button
+                            onClick={() => setSelectedPlan(null)}
+                            className="absolute top-6 right-6 p-2 text-white/40 hover:text-white transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        <div className="mb-8">
+                            <h3 className="text-2xl font-bold mb-2 text-white">Checkout: {selectedPlan.name}</h3>
+                            <p className="text-white/40 text-sm font-medium">Activate your license for <span className="text-primary">{selectedPlan.price}</span></p>
+                        </div>
+
+                        <form onSubmit={handleCheckout} className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Full Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="e.g. Rahul Sharma"
+                                    className="w-full h-14 px-6 rounded-2xl bg-white/5 border border-white/5 focus:ring-2 focus:ring-primary focus:bg-white/10 text-white transition-all outline-none font-medium"
+                                    value={customerDetails.customer_name}
+                                    onChange={(e) => setCustomerDetails({ ...customerDetails, customer_name: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Business Email</label>
+                                <input
+                                    type="email"
+                                    required
+                                    placeholder="rahul@business.com"
+                                    className="w-full h-14 px-6 rounded-2xl bg-white/5 border border-white/5 focus:ring-2 focus:ring-primary focus:bg-white/10 text-white transition-all outline-none font-medium"
+                                    value={customerDetails.customer_email}
+                                    onChange={(e) => setCustomerDetails({ ...customerDetails, customer_email: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 ml-1">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    required
+                                    pattern="[0-9]{10}"
+                                    placeholder="9876543210"
+                                    className="w-full h-14 px-6 rounded-2xl bg-white/5 border border-white/5 focus:ring-2 focus:ring-primary focus:bg-white/10 text-white transition-all outline-none font-medium"
+                                    value={customerDetails.customer_phone}
+                                    onChange={(e) => setCustomerDetails({ ...customerDetails, customer_phone: e.target.value })}
+                                />
+                                <p className="text-[10px] text-white/40 italic px-2">Cashfree updates will be sent to this number.</p>
+                            </div>
+
+                            {isSdkBlocked && (
+                                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium space-y-2">
+                                    <div className="flex items-center gap-2 font-bold uppercase tracking-widest">
+                                        <AlertTriangle className="w-4 h-4" />
+                                        <span>Payment System Blocked</span>
+                                    </div>
+                                    <p>Your browser is blocking the secure payment gateway. Please disable **Brave Shields** or **Ad-Blockers** to continue.</p>
+                                </div>
+                            )}
+
+                            {error && <p className="text-sm text-red-500 font-bold text-center">{error}</p>}
+
+                            <Button
+                                type="submit"
+                                disabled={isProcessing}
+                                className="w-full h-16 text-lg btn-pro-primary"
+                            >
+                                {isProcessing ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Processing securely...</span>
+                                    </div>
+                                ) : (
+                                    `Initiate Secure Payment (${selectedPlan.price})`
+                                )}
+                            </Button>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }
