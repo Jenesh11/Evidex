@@ -61,8 +61,29 @@ export default function Support() {
     return (
         <div className="bg-brand-mesh min-h-screen pt-32 pb-24">
             <Helmet>
-                <title>Support | Professional Assistance for Your Business</title>
-                <meta name="description" content="Need help with EvidEx? Access our expert support team, browse the documentation, or find quick answers in our FAQ." />
+                <title>EvidEx Support – FAQs, License Help & Expert Assistance</title>
+                <meta name="description" content="Need help with EvidEx? Get answers on license activation, video privacy, multi-station setups, and more. Contact our expert support team." />
+                <meta name="keywords" content="EvidEx support, inventory software help, license activation EvidEx, video evidence software FAQ" />
+                <link rel="canonical" href="https://evidex.in/support" />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://evidex.in/support" />
+                <meta property="og:title" content="EvidEx Support – We've Got Your Back" />
+                <meta property="og:description" content="Expert support for EvidEx users. License help, camera setup, multi-station warehouses. Human-focused assistance." />
+                <meta property="og:image" content="https://evidex.in/logo.png" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="EvidEx Support & FAQ" />
+                <meta name="twitter:description" content="Get answers fast. License activation, video privacy, multi-station setup guidance and more." />
+                <meta name="twitter:image" content="https://evidex.in/logo.png" />
+                <script type="application/ld+json">{JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        { "@type": "Question", "name": "How do I activate my license?", "acceptedAnswer": { "@type": "Answer", "text": "After checkout, you will receive a license code via email. Launch EvidEx, go to Settings > License, and enter your code." } },
+                        { "@type": "Question", "name": "Is my video data uploaded anywhere?", "acceptedAnswer": { "@type": "Answer", "text": "No. EvidEx is a Local First application. Your evidence stays on your hardware. Only the SHA-256 hash is stored for verification." } },
+                        { "@type": "Question", "name": "Can I use one license on multiple stations?", "acceptedAnswer": { "@type": "Answer", "text": "Standard licenses are per-device. Contact our Sales team for multi-station volume licensing." } },
+                        { "@type": "Question", "name": "What if my internet goes down?", "acceptedAnswer": { "@type": "Answer", "text": "EvidEx is fully offline-capable. All packing, recording, and evidence generation works without an internet connection." } }
+                    ]
+                })}</script>
             </Helmet>
 
             <div className="container-wide">

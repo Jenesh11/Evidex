@@ -22,8 +22,37 @@ export default function Home() {
     return (
         <div className="bg-brand-mesh min-h-screen">
             <Helmet>
-                <title>EvidEx | Professional Inventory & Video Evidence Software</title>
-                <meta name="description" content="Protect your e-commerce business from return scams with tamper-proof video evidence and professional order management built for Windows." />
+                <title>EvidEx – Inventory & Video Evidence Software for E-Commerce Sellers</title>
+                <meta name="description" content="EvidEx is tamper-proof packing & order management software for Windows. Stop return scams with SHA-256 video evidence, offline inventory tracking, and dispute-ready proof." />
+                <meta name="keywords" content="inventory management software, video evidence packing, return fraud protection, e-commerce order management, packing verification, Windows inventory app, EvidEx" />
+                <link rel="canonical" href="https://evidex.in/" />
+
+                {/* Open Graph */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://evidex.in/" />
+                <meta property="og:title" content="EvidEx – Stop Return Scams with Verified Video Evidence" />
+                <meta property="og:description" content="Professional Windows software that stops return scams by creating tamper-proof video evidence of your packing process. Trusted by e-commerce sellers." />
+                <meta property="og:image" content="https://evidex.in/logo.png" />
+                <meta property="og:site_name" content="EvidEx" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="EvidEx – Stop Return Scams with Video Evidence" />
+                <meta name="twitter:description" content="Tamper-proof packing video + inventory management for Windows. Built for serious e-commerce sellers." />
+                <meta name="twitter:image" content="https://evidex.in/logo.png" />
+
+                {/* JSON-LD WebPage */}
+                <script type="application/ld+json">{JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "WebPage",
+                    "name": "EvidEx – Inventory & Video Evidence Software",
+                    "url": "https://evidex.in/",
+                    "description": "Stop return scams with tamper-proof packing video evidence and professional order management for Windows.",
+                    "breadcrumb": {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [{ "@type": "ListItem", "position": 1, "name": "Home", "item": "https://evidex.in/" }]
+                    }
+                })}</script>
             </Helmet>
 
             {/* --- HERO SECTION --- */}

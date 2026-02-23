@@ -34,8 +34,19 @@ export default function DownloadPage() {
     return (
         <div className="bg-brand-mesh min-h-screen pt-32 pb-24">
             <Helmet>
-                <title>Download | Secure Your Inventory Protection Today</title>
-                <meta name="description" content="Download EvidEx for Windows. Start your 7-day free trial. Professional-grade video evidence software for high-volume sellers." />
+                <title>Download EvidEx for Windows – Free 7-Day Trial</title>
+                <meta name="description" content="Download EvidEx for Windows 10/11. Start your free 7-day trial of professional video evidence & inventory management software. ~85MB installer, offline-first." />
+                <meta name="keywords" content="download EvidEx, inventory software Windows, packing evidence app download, free trial inventory software" />
+                <link rel="canonical" href="https://evidex.in/download" />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://evidex.in/download" />
+                <meta property="og:title" content="Download EvidEx for Windows – Free 7-Day Trial" />
+                <meta property="og:description" content="Professional video evidence & order management software for Windows. Start your 7-day free trial today. Offline-first, no cloud required." />
+                <meta property="og:image" content="https://evidex.in/logo.png" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="Download EvidEx for Windows – Free Trial" />
+                <meta name="twitter:description" content="Professional packing evidence software. Start free today. Windows 10/11. Offline-first." />
+                <meta name="twitter:image" content="https://evidex.in/logo.png" />
             </Helmet>
 
             <div className="container-wide">

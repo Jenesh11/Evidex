@@ -145,8 +145,19 @@ export default function Pricing() {
     return (
         <div className="bg-brand-mesh min-h-screen pt-32 pb-24">
             <Helmet>
-                <title>Pricing | Clear and Honest Protection for Your Business</title>
-                <meta name="description" content="Choose the EvidEx plan that fits your volume. Starter at ₹1 and Pro at ₹1,999. No hidden fees, just reliable protection." />
+                <title>EvidEx Pricing – Plans from ₹1 | Inventory Protection Software</title>
+                <meta name="description" content="EvidEx plans from ₹1. Choose Starter, Professional (₹499/mo), or Lifetime (₹1,999). 7-day free trial on all plans. No hidden fees." />
+                <meta name="keywords" content="EvidEx pricing, inventory software price, packing evidence software plans, buy EvidEx, EvidEx license" />
+                <link rel="canonical" href="https://evidex.in/pricing" />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://evidex.in/pricing" />
+                <meta property="og:title" content="EvidEx Pricing – Straightforward Protection Plans" />
+                <meta property="og:description" content="Plans from ₹1. Starter, Professional, and Lifetime options with 7-day free trial. No complex tiers. Just reliable protection." />
+                <meta property="og:image" content="https://evidex.in/logo.png" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="EvidEx Pricing – From ₹1" />
+                <meta name="twitter:description" content="Starter ₹1 • Professional ₹499/mo • Lifetime ₹1,999. 7-day free trial. Honest pricing for serious sellers." />
+                <meta name="twitter:image" content="https://evidex.in/logo.png" />
             </Helmet>
 
             <div className="container-wide">

@@ -57,8 +57,19 @@ export default function AppDetails() {
     return (
         <div className="bg-brand-mesh min-h-screen pt-32 pb-24">
             <Helmet>
-                <title>Features | The Technology Behind EvidEx Protection</title>
-                <meta name="description" content="Discover the professional-grade features of EvidEx. From cryptographically sealed video evidence to advanced order lifecycle tracking." />
+                <title>EvidEx Features – SHA-256 Video Evidence & Order Management</title>
+                <meta name="description" content="Explore EvidEx's professional features: cryptographically sealed video evidence, multi-staff inventory management, analytics, and offline-first Windows architecture." />
+                <meta name="keywords" content="EvidEx features, SHA-256 video evidence, inventory management features, packing camera software, order tracking Windows" />
+                <link rel="canonical" href="https://evidex.in/app-details" />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://evidex.in/app-details" />
+                <meta property="og:title" content="EvidEx Features – Built for Unfailing Evidence" />
+                <meta property="og:description" content="Cryptographically sealed packing video, advanced order lifecycle tracking, multi-staff management. Everything you need to stop return fraud." />
+                <meta property="og:image" content="https://evidex.in/logo.png" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="EvidEx Features – SHA-256 Video Evidence" />
+                <meta name="twitter:description" content="SHA-256 sealed packing video, order management, analytics. Professional inventory protection for Windows." />
+                <meta name="twitter:image" content="https://evidex.in/logo.png" />
             </Helmet>
 
             <div className="container-wide">

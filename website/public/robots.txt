@@ -1,0 +1,10 @@
+# EvidEx – robots.txt
+# https://evidex.in
+
+User-agent: *
+Allow: /
+Disallow: /order-success
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://evidex.in/sitemap.xml
