@@ -215,67 +215,66 @@ export default function Inventory() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                                {filteredProducts.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-16">
-                                            <div className="flex flex-col items-center gap-3">
-                                                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                                                    <Package className="w-6 h-6 text-muted-foreground" />
-                                                </div>
-                                                <p className="text-muted-foreground font-medium">No products found</p>
-                                                <Button variant="link" onClick={() => { resetForm(); setShowDialog(true); }}>
-                                                    Add your first product
-                                                </Button>
+                            {filteredProducts.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-16">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                                <Package className="w-6 h-6 text-muted-foreground" />
                                             </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredProducts.map((product) => {
-                                        const isLowStock = product.quantity <= product.low_stock_threshold;
-                                        return (
-                                            <TableRow key={product.id} className="group hover:bg-white/[0.04] transition-all duration-300 border-white/5 h-20">
-                                                <TableCell className="font-mono font-bold text-primary pl-8 text-sm">
-                                                    {product.sku}
-                                                </TableCell>
-                                                <TableCell className="font-bold text-white font-display text-lg">
-                                                    {product.name}
-                                                    {isLowStock && (
-                                                        <span className="ml-3 inline-flex h-2.5 w-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)] animate-pulse" title="Low Stock" />
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="hidden md:table-cell text-white/40 text-sm italic font-medium truncate max-w-[200px]">
-                                                    {product.description || 'No description provided'}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className={cn(
-                                                        "inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-inner",
-                                                        isLowStock ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : "bg-primary/10 text-primary border-primary/20"
-                                                    )}>
-                                                        {product.quantity} Units
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right font-bold text-emerald-400 font-display text-lg">
-                                                    {formatCurrency(product.price)}
-                                                </TableCell>
-                                                <TableCell className="text-right pr-8">
-                                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0 translate-x-4">
-                                                        <Button variant="ghost" size="icon" className="h-10 w-10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 rounded-xl" onClick={() => openEditDialog(product)}>
-                                                            <Edit className="w-4 h-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" className="h-10 w-10 bg-red-500/5 text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl" onClick={() => handleDelete(product.id)}>
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
+                                            <p className="text-muted-foreground font-medium">No products found</p>
+                                            <Button variant="link" onClick={() => { resetForm(); setShowDialog(true); }}>
+                                                Add your first product
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredProducts.map((product) => {
+                                    const isLowStock = product.quantity <= product.low_stock_threshold;
+                                    return (
+                                        <TableRow key={product.id} className="group hover:bg-white/[0.04] transition-all duration-300 border-white/5 h-20">
+                                            <TableCell className="font-mono font-bold text-primary pl-8 text-sm">
+                                                {product.sku}
+                                            </TableCell>
+                                            <TableCell className="font-bold text-white font-display text-lg">
+                                                {product.name}
+                                                {isLowStock && (
+                                                    <span className="ml-3 inline-flex h-2.5 w-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)] animate-pulse" title="Low Stock" />
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="hidden md:table-cell text-white/40 text-sm italic font-medium truncate max-w-[200px]">
+                                                {product.description || 'No description provided'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className={cn(
+                                                    "inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-inner",
+                                                    isLowStock ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : "bg-primary/10 text-primary border-primary/20"
+                                                )}>
+                                                    {product.quantity} Units
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right font-bold text-emerald-400 font-display text-lg">
+                                                {formatCurrency(product.price)}
+                                            </TableCell>
+                                            <TableCell className="text-right pr-8">
+                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0 translate-x-4">
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 rounded-xl" onClick={() => openEditDialog(product)}>
+                                                        <Edit className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 bg-red-500/5 text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl" onClick={() => handleDelete(product.id)}>
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
 
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
                 <DialogContent className="max-w-2xl">
@@ -377,6 +376,6 @@ export default function Inventory() {
                     </form>
                 </DialogContent>
             </Dialog>
-        </div >
+        </div>
     );
 }
