@@ -165,59 +165,56 @@ export default function Inventory() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 pb-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold mb-2 tracking-tight">Inventory</h1>
-                    <p className="text-muted-foreground">Manage your product catalog and stock levels</p>
+                    <h1 className="text-4xl font-bold tracking-tight mb-2 text-white font-display">Inventory</h1>
+                    <p className="text-muted-foreground text-lg">Manage your product catalog and enterprise stock levels</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" onClick={handleRefresh}>
-                                    <RotateCcw className="w-4 h-4" />
+                                <Button variant="outline" size="icon" onClick={handleRefresh} className="h-12 w-12 bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-2xl">
+                                    <RotateCcw className="w-5 h-5" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Refresh Inventory</p>
-                            </TooltipContent>
+                            <TooltipContent side="bottom" className="font-bold uppercase tracking-widest text-[10px]">Refresh</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                    <Button size="lg" onClick={() => { resetForm(); setShowDialog(true); }} className="shadow-lg shadow-primary/20 transition-all hover:scale-105">
+                    <Button size="lg" onClick={() => { resetForm(); setShowDialog(true); }} className="btn-pro-primary h-12 px-8">
                         <Plus className="w-5 h-5 mr-2" />
                         Add Product
                     </Button>
                 </div>
             </div>
 
-            <Card className="border-border/50 shadow-sm">
-                <CardContent className="p-6">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                            <Input
-                                placeholder="Search products by name or SKU..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 h-12 bg-muted/30 border-muted"
-                            />
-                        </div>
+            <div className="card-pro border-white/5 p-8">
+                <div className="flex items-center gap-6 mb-8">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
+                        <Input
+                            placeholder="Search products by name or SKU..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-12 h-14 bg-white/5 border-white/10 text-white focus:border-primary/50 focus:ring-primary/20 rounded-2xl text-lg px-6"
+                        />
                     </div>
+                </div>
 
-                    <div className="rounded-lg border overflow-hidden">
-                        <Table>
-                            <TableHeader className="bg-muted/40">
-                                <TableRow>
-                                    <TableHead className="w-[150px]"><div className="flex items-center gap-2"><Tag className="w-4 h-4" /> SKU</div></TableHead>
-                                    <TableHead><div className="flex items-center gap-2"><Package className="w-4 h-4" /> Name</div></TableHead>
-                                    <TableHead className="hidden md:table-cell"><div className="flex items-center gap-2"><FileText className="w-4 h-4" /> Description</div></TableHead>
-                                    <TableHead className="text-right"><div className="flex items-center justify-end gap-2"><LayoutGrid className="w-4 h-4" /> Quantity</div></TableHead>
-                                    <TableHead className="text-right"><div className="flex items-center justify-end gap-2"><DollarSign className="w-4 h-4" /> Price</div></TableHead>
-                                    <TableHead className="w-[100px] text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
+                <div className="rounded-[2rem] border border-white/5 overflow-hidden bg-white/[0.02]">
+                    <Table>
+                        <TableHeader className="bg-white/5">
+                            <TableRow className="hover:bg-transparent border-white/5 px-4 h-16">
+                                <TableHead className="w-[180px] text-white/40 font-bold uppercase tracking-widest text-[10px] pl-8">SKU Code</TableHead>
+                                <TableHead className="text-white/40 font-bold uppercase tracking-widest text-[10px]">Product Name</TableHead>
+                                <TableHead className="hidden md:table-cell text-white/40 font-bold uppercase tracking-widest text-[10px]">Description</TableHead>
+                                <TableHead className="text-right text-white/40 font-bold uppercase tracking-widest text-[10px]">Quantity</TableHead>
+                                <TableHead className="text-right text-white/40 font-bold uppercase tracking-widest text-[10px]">Unit Price</TableHead>
+                                <TableHead className="w-[120px] text-right text-white/40 font-bold uppercase tracking-widest text-[10px] pr-8">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                                 {filteredProducts.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center py-16">
@@ -236,50 +233,38 @@ export default function Inventory() {
                                     filteredProducts.map((product) => {
                                         const isLowStock = product.quantity <= product.low_stock_threshold;
                                         return (
-                                            <TableRow key={product.id} className="group hover:bg-muted/40 transition-colors">
-                                                <TableCell className="font-mono font-medium text-primary">
+                                            <TableRow key={product.id} className="group hover:bg-white/[0.04] transition-all duration-300 border-white/5 h-20">
+                                                <TableCell className="font-mono font-bold text-primary pl-8 text-sm">
                                                     {product.sku}
                                                 </TableCell>
-                                                <TableCell className="font-medium">
+                                                <TableCell className="font-bold text-white font-display text-lg">
                                                     {product.name}
                                                     {isLowStock && (
-                                                        <span className="ml-2 inline-flex h-2 w-2 rounded-full bg-orange-500 animate-pulse" title="Low Stock" />
+                                                        <span className="ml-3 inline-flex h-2.5 w-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)] animate-pulse" title="Low Stock" />
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[200px]">
-                                                    {product.description}
+                                                <TableCell className="hidden md:table-cell text-white/40 text-sm italic font-medium truncate max-w-[200px]">
+                                                    {product.description || 'No description provided'}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Badge variant={isLowStock ? "destructive" : "secondary"} className={`${isLowStock ? 'bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 border-orange-500/20' : ''}`}>
-                                                        {product.quantity} units
-                                                    </Badge>
+                                                    <div className={cn(
+                                                        "inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-inner",
+                                                        isLowStock ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : "bg-primary/10 text-primary border-primary/20"
+                                                    )}>
+                                                        {product.quantity} Units
+                                                    </div>
                                                 </TableCell>
-                                                <TableCell className="text-right font-mono font-medium">
+                                                <TableCell className="text-right font-bold text-emerald-400 font-display text-lg">
                                                     {formatCurrency(product.price)}
                                                 </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary" onClick={() => openEditDialog(product)}>
-                                                                        <Edit className="w-4 h-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>Edit Product</p></TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(product.id)}>
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </Button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent><p>Delete Product</p></TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
+                                                <TableCell className="text-right pr-8">
+                                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0 translate-x-4">
+                                                        <Button variant="ghost" size="icon" className="h-10 w-10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10 rounded-xl" onClick={() => openEditDialog(product)}>
+                                                            <Edit className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" className="h-10 w-10 bg-red-500/5 text-red-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl" onClick={() => handleDelete(product.id)}>
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -392,6 +377,6 @@ export default function Inventory() {
                     </form>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }
