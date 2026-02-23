@@ -172,7 +172,7 @@ export default function Sidebar() {
                 )}
 
                 <div className="px-4 pb-4 text-[10px] text-muted-foreground/60 text-center font-medium">
-                    v1.0.26 • Local Storage
+                    v1.0.27 • Local Storage
                 </div>
             </div>
         </aside>

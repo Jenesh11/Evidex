@@ -61,12 +61,15 @@ export const setupStaffHandlers = () => {
         const workspaceId = getWorkspaceId();
         if (!workspaceId) throw new Error('No active workspace');
 
-        const { username, password_hash, full_name, role, is_active } = staffData;
+        const { username, password, full_name, role, is_active } = staffData;
 
-        // Hash password
-        // Note: frontend sends plain password in `password_hash` field currently, we hash here
+        if (!password || password.trim() === '') {
+            throw new Error('Password is required');
+        }
+
+        // Hash the plain password sent from the frontend
         const salt = bcrypt.genSaltSync(10);
-        const hash = bcrypt.hashSync(password_hash, salt);
+        const hash = bcrypt.hashSync(password, salt);
 
         const result = executeUpdate(
             `INSERT INTO staff (username, password_hash, full_name, role, is_active, workspace_id)
