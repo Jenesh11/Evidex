@@ -95,24 +95,37 @@ export default function Home() {
                             </p>
                         </div>
 
-                        {/* Hero visual */}
+                        {/* Hero visual – real app screenshot */}
                         <div className="relative lg:translate-x-12 animate-slide-in-right">
-                            <div className="relative z-10 p-4 bg-white/[0.03] backdrop-blur-2xl rounded-3xl border border-white/10 shadow-2xl">
-                                <div className="bg-brand-deep/80 rounded-2xl overflow-hidden aspect-video shadow-inner flex flex-col items-center justify-center gap-4 p-8 text-center border border-white/5">
-                                    <Shield className="w-16 h-16 text-primary/40" />
-                                    <div className="text-white/40 font-semibold text-sm">EvidEx Packing Dashboard</div>
-                                    <div className="flex gap-3">
-                                        {['Order #1042', 'Order #1043', 'Order #1044'].map(o => (
-                                            <div key={o} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/30 text-xs font-mono">{o}</div>
-                                        ))}
-                                    </div>
-                                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full w-2/3 bg-primary/40 rounded-full" />
-                                    </div>
+                            {/* Glow effects */}
+                            <div className="absolute -top-12 -right-12 w-72 h-72 bg-primary/25 rounded-full blur-3xl -z-10" />
+                            <div className="absolute -bottom-12 -left-12 w-72 h-72 bg-brand-accent/20 rounded-full blur-3xl -z-10" />
+
+                            {/* Device frame */}
+                            <div className="relative z-10 p-2 bg-white/[0.04] backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl">
+                                {/* Window title bar */}
+                                <div className="flex items-center gap-1.5 px-3 py-2 border-b border-white/5">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
+                                    <span className="ml-auto text-[10px] text-white/20 font-mono">EvidEx Management</span>
                                 </div>
+                                {/* Screenshot */}
+                                <img
+                                    src="/app-preview.png"
+                                    alt="EvidEx inventory management dashboard showing orders, packing camera, and stock alerts"
+                                    className="rounded-xl w-full object-cover"
+                                    loading="eager"
+                                    width="1024"
+                                    height="640"
+                                />
                             </div>
-                            <div className="absolute -top-12 -right-12 w-64 h-64 bg-primary/20 rounded-full blur-3xl -z-10" />
-                            <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-brand-accent/20 rounded-full blur-3xl -z-10" />
+
+                            {/* Live badge */}
+                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold shadow-xl backdrop-blur-md">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                Live App Preview
+                            </div>
                         </div>
                     </div>
                 </div>
