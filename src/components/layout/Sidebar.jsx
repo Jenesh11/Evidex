@@ -64,13 +64,13 @@ export default function Sidebar() {
     };
 
     return (
-        <aside className="w-64 bg-card border-r border-border/50 flex flex-col h-full">
-            <div className="p-4 border-b border-border/30">
-                <div className="flex items-center gap-3">
-                    <Logo className="w-12 h-12" />
+        <aside className="w-64 glass border-r border-white/5 flex flex-col h-full relative z-20">
+            <div className="p-6 border-b border-white/5">
+                <div className="flex items-center gap-4">
+                    <Logo className="w-10 h-10 drop-shadow-2xl" />
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Evidex</h1>
-                        <p className="text-sm text-muted-foreground font-medium">Protection System</p>
+                        <h1 className="text-xl font-bold tracking-tight text-white font-display">EvidEx</h1>
+                        <p className="text-[10px] text-primary/80 font-bold uppercase tracking-[0.2em]">Shield System</p>
                     </div>
                 </div>
             </div>

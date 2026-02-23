@@ -81,36 +81,36 @@ export default function Dashboard() {
             value: formatCurrency(stats.revenue),
             subtitle: "Today's Earnings",
             icon: CreditCard,
-            color: 'text-emerald-500',
+            color: 'text-emerald-400',
             bgColor: 'bg-emerald-500/10',
-            borderColor: 'border-emerald-500/20'
+            borderColor: 'border-emerald-500/10'
         },
         {
             title: 'Pending Orders',
             value: stats.pendingOrders,
             subtitle: 'Require Attention',
             icon: ShoppingCart,
-            color: 'text-purple-500',
-            bgColor: 'bg-purple-500/10',
-            borderColor: 'border-purple-500/20'
+            color: 'text-primary',
+            bgColor: 'bg-primary/10',
+            borderColor: 'border-primary/10'
         },
         {
             title: 'Low Stock Alerts',
             value: stats.lowStock,
             subtitle: 'Products running low',
             icon: AlertTriangle,
-            color: 'text-orange-500',
+            color: 'text-orange-400',
             bgColor: 'bg-orange-500/10',
-            borderColor: 'border-orange-500/20'
+            borderColor: 'border-orange-500/10'
         },
         {
             title: 'Total Products',
             value: stats.totalProducts,
             subtitle: 'In Inventory',
             icon: Boxes,
-            color: 'text-blue-500',
+            color: 'text-blue-400',
             bgColor: 'bg-blue-500/10',
-            borderColor: 'border-blue-500/20'
+            borderColor: 'border-blue-500/10'
         },
     ];
 
@@ -127,14 +127,14 @@ export default function Dashboard() {
         <div className="space-y-8 pb-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight mb-2 text-white">Dashboard</h1>
-                    <p className="text-muted-foreground text-lg">Overview of your warehouse operations</p>
+                    <h1 className="text-4xl font-bold tracking-tight mb-2 text-white font-display">Dashboard</h1>
+                    <p className="text-muted-foreground text-lg italic">Overview of your warehouse operations</p>
                 </div>
                 <div className="flex gap-2">
                     <Button
                         onClick={handleNewOrder}
                         size="lg"
-                        className={cn("shadow-lg shadow-primary/20", isTrialExpired && "opacity-60")}
+                        className={cn("btn-pro-primary", isTrialExpired && "opacity-60")}
                     >
                         <Plus className="w-5 h-5 mr-2" /> New Order
                         {isTrialExpired && <Lock className="w-4 h-4 ml-2" />}
@@ -152,22 +152,20 @@ export default function Dashboard() {
                         transition={{ delay: index * 0.1 }}
                         className="h-full"
                     >
-                        <Card className={`h-full border ${stat.borderColor} bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 group`}>
-                            <CardContent className="p-6">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground mb-1">{stat.title}</p>
-                                        <h3 className="text-3xl font-bold tracking-tight mb-1">{stat.value}</h3>
-                                        <p className={`text-xs ${stat.color} font-medium flex items-center gap-1`}>
-                                            <TrendingUp className="w-3 h-3" /> {stat.subtitle}
-                                        </p>
-                                    </div>
-                                    <div className={`p-3 rounded-xl ${stat.bgColor} ${stat.color} ring-1 ring-inset ring-white/10 group-hover:scale-110 transition-transform duration-300`}>
-                                        <stat.icon className="w-6 h-6" />
-                                    </div>
+                        <div className={cn("h-full card-pro group", stat.borderColor)}>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">{stat.title}</p>
+                                    <h3 className="text-3xl font-bold tracking-tight mb-1 text-white">{stat.value}</h3>
+                                    <p className={`text-[10px] ${stat.color} font-bold uppercase tracking-wider flex items-center gap-2`}>
+                                        <TrendingUp className="w-3 h-3" /> {stat.subtitle}
+                                    </p>
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <div className={`p-3 rounded-2xl ${stat.bgColor} ${stat.color} border border-white/5 shadow-inner group-hover:scale-110 transition-transform duration-500`}>
+                                    <stat.icon className="w-6 h-6" />
+                                </div>
+                            </div>
+                        </div>
                     </motion.div>
                 ))}
             </div>

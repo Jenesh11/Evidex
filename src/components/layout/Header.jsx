@@ -89,36 +89,36 @@ export default function Header() {
     const statusInfo = getStatusText();
 
     return (
-        <header className="h-16 border-b border-border/30 bg-card px-6 flex items-center justify-between shadow-sm">
+        <header className="h-16 border-b border-white/5 glass px-6 flex items-center justify-between shadow-sm relative z-10">
             <div>
-                <h2 className="text-lg font-semibold">Welcome back, {user?.email?.split('@')[0] || 'User'}</h2>
-                <p className="text-sm text-muted-foreground">{profile?.role || 'Role'}</p>
+                <h2 className="text-lg font-bold font-display text-white">Welcome, {user?.email?.split('@')[0] || 'User'}</h2>
+                <p className="text-[10px] text-primary/80 font-bold uppercase tracking-widest">{profile?.role || 'Role'}</p>
             </div>
 
-            <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                    {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white/60 hover:text-white hover:bg-white/5">
+                    {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </Button>
 
-                <div className="w-px h-6 bg-border" />
+                <div className="w-px h-4 bg-white/10" />
 
                 {/* Plan Badge */}
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold ${getPlanBadgeStyle()}`}>
-                    <Crown className="w-3.5 h-3.5" />
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shadow-inner ${getPlanBadgeStyle()}`}>
+                    <Crown className="w-3 h-3" />
                     {PLAN_FEATURES[effectivePlan || currentPlan]?.name || 'Pro'}
                 </div>
 
                 {/* User Account Dropdown */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="sm" className="flex items-center gap-2 hover:bg-secondary/80">
-                            <User className="w-4 h-4" />
-                            <span className="text-sm font-medium">{user?.email?.split('@')[0] || 'Account'}</span>
+                        <Button variant="secondary" size="sm" className="flex items-center gap-2 bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-full px-4">
+                            <User className="w-3.5 h-3.5" />
+                            <span className="text-xs font-bold uppercase tracking-wider">{user?.email?.split('@')[0] || 'Account'}</span>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-80 p-0">
+                    <DropdownMenuContent align="end" className="w-80 p-0 glass border-white/10 rounded-3xl overflow-hidden shadow-3xl">
                         {/* Header Section */}
-                        <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 dark:from-purple-500/20 dark:to-blue-500/20 p-4 border-b">
+                        <div className="bg-gradient-to-br from-primary/20 to-blue-500/10 p-5 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
                                     {user?.email?.charAt(0).toUpperCase() || 'U'}

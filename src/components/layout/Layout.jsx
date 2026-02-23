@@ -37,7 +37,8 @@ export default function Layout() {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-background overflow-hidden relative">
+        <div className="flex flex-col h-screen bg-brand-mesh overflow-hidden relative">
+            <div className="noise-overlay" />
             <TitleBar />
             <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
