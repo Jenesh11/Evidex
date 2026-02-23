@@ -71,7 +71,7 @@ export default function DownloadPage() {
                                     <p className="text-white/60 mb-10 leading-relaxed italic">
                                         Optimized for Windows 10 & 11. Single executable with built-in auto-update capabilities and local-first encryption.
                                     </p>
-                                    <a href="https://github.com/Jenesh11/Evidex/releases/latest/download/EvidEx-Setup.exe">
+                                    <a href={`https://github.com/Jenesh11/Evidex/releases/download/v${version}/Evidex-Setup-${version}.exe`}>
                                         <Button className="w-full h-16 text-lg btn-pro-primary shadow-xl">
                                             Download EvidEx for Windows
                                         </Button>
