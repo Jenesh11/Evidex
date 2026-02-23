@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Edit, Trash2, Users as UsersIcon, UserCog, UserCheck, Shield, Key, MoreVertical } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Plus, Search, Edit, Trash2, Users as UsersIcon, UserCog, UserCheck, Shield, Key, MoreVertical, LayoutGrid, ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Staff() {
-    const { hasPermission } = useAuth();
+const Staff = () => {
+    const { user, hasPermission, activePlan } = useAuth();
     const { toast } = useToast();
     const [staff, setStaff] = useState([]);
-    const [filteredStaff, setFilteredStaff] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [showDialog, setShowDialog] = useState(false);
     const [editingStaff, setEditingStaff] = useState(null);
@@ -24,130 +24,76 @@ export default function Staff() {
         password: '',
         full_name: '',
         role: 'PACKER',
-        is_active: true,
+        is_active: true
     });
 
     useEffect(() => {
         loadStaff();
     }, []);
 
-    useEffect(() => {
-        if (searchQuery) {
-            const filtered = staff.filter(s =>
-                s.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                s.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            setFilteredStaff(filtered);
-        } else {
-            setFilteredStaff(staff);
-        }
-    }, [searchQuery, staff]);
-
     const loadStaff = async () => {
         try {
+            setLoading(true);
             const data = await window.electronAPI.staff.getAll();
             setStaff(data);
-            if (!searchQuery) setFilteredStaff(data);
         } catch (error) {
-            console.error('Error loading staff:', error);
+            console.error('Failed to load staff:', error);
+            toast({
+                title: "Error",
+                description: "Failed to load staff list",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // Validation
-        if (!formData.username.trim()) {
-            toast({
-                title: 'Validation Error',
-                description: 'Username is required',
-                variant: 'destructive',
-            });
-            return;
-        }
-
-        if (!editingStaff && !formData.password.trim()) {
-            toast({
-                title: 'Validation Error',
-                description: 'Password is required for new staff',
-                variant: 'destructive',
-            });
-            return;
-        }
-
-        if (!formData.full_name.trim()) {
-            toast({
-                title: 'Validation Error',
-                description: 'Full name is required',
-                variant: 'destructive',
-            });
-            return;
-        }
-
         try {
             if (editingStaff) {
-                await window.electronAPI.staff.update(editingStaff.id, {
-                    username: formData.username,
-                    full_name: formData.full_name,
-                    role: formData.role,
-                    is_active: formData.is_active,
-                    password: formData.password, // Only update if provided
-                });
-                toast({
-                    title: 'Success',
-                    description: 'Staff member updated successfully',
-                });
+                await window.electronAPI.staff.update(editingStaff.id, formData);
+                toast({ title: "Success", description: "Staff member updated successfully" });
             } else {
-                await window.electronAPI.staff.create({
-                    ...formData,
-                    password_hash: formData.password,
-                });
-                toast({
-                    title: 'Success',
-                    description: 'Staff member created successfully',
-                });
+                await window.electronAPI.staff.create(formData);
+                toast({ title: "Success", description: "New staff member added" });
             }
-            loadStaff();
             setShowDialog(false);
             resetForm();
+            loadStaff();
         } catch (error) {
-            console.error('Error saving staff:', error);
-
-            // Check for specific error types
-            if (error.message && error.message.includes('UNIQUE constraint failed: staff.username')) {
-                toast({
-                    title: 'Username Already Exists',
-                    description: 'This username is already taken. Please choose a different username.',
-                    variant: 'destructive',
-                });
-            } else {
-                toast({
-                    title: 'Error',
-                    description: error.message || 'Failed to save staff member',
-                    variant: 'destructive',
-                });
-            }
+            toast({
+                title: "Error",
+                description: error.message || "Failed to save staff member",
+                variant: "destructive",
+            });
         }
     };
 
     const handleDelete = async (id) => {
-        if (confirm('Are you sure you want to delete this staff member?')) {
-            try {
-                await window.electronAPI.staff.delete(id);
-                toast({
-                    title: 'Success',
-                    description: 'Staff member deleted successfully',
-                });
-                loadStaff();
-            } catch (error) {
-                console.error('Error deleting staff:', error);
-                toast({
-                    title: 'Error',
-                    description: error.message || 'Failed to delete staff member',
-                    variant: 'destructive',
-                });
-            }
+        if (!confirm('Are you sure you want to remove this staff member?')) return;
+        try {
+            await window.electronAPI.staff.delete(id);
+            toast({ title: "Success", description: "Staff member removed" });
+            loadStaff();
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to remove staff member",
+                variant: "destructive",
+            });
         }
+    };
+
+    const resetForm = () => {
+        setFormData({
+            username: '',
+            password: '',
+            full_name: '',
+            role: 'PACKER',
+            is_active: true
+        });
+        setEditingStaff(null);
     };
 
     const openEditDialog = (staffMember) => {
@@ -157,336 +103,376 @@ export default function Staff() {
             password: '',
             full_name: staffMember.full_name,
             role: staffMember.role,
-            is_active: staffMember.is_active,
+            is_active: staffMember.is_active === 1 || staffMember.is_active === true
         });
         setShowDialog(true);
     };
 
-    const resetForm = () => {
-        setEditingStaff(null);
-        setFormData({
-            username: '',
-            password: '',
-            full_name: '',
-            role: 'PACKER',
-            is_active: true,
-        });
-    };
-
-    // Helper for initials
     const getInitials = (name) => {
         return name
             .split(' ')
-            .map(word => word[0])
+            .map(n => n[0])
             .join('')
             .toUpperCase()
-            .slice(0, 2);
+            .substring(0, 2);
     };
 
-    // Check if user has permission to manage staff
-    if (!hasPermission('manage_staff')) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <Card className="max-w-md border-destructive/20 bg-destructive/5">
-                    <CardContent className="p-8 text-center">
-                        <div className="bg-destructive/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Shield className="w-8 h-8 text-destructive" />
-                        </div>
-                        <h2 className="text-2xl font-bold mb-2 text-destructive">Access Denied</h2>
-                        <p className="text-muted-foreground">You don't have permission to manage staff settings.</p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    const filteredStaff = staff.filter(s =>
+        s.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-    const { activePlan } = useAuth();
-    if (activePlan === 'STARTER') {
-        return (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] space-y-6 text-center px-4">
-                <div className="bg-primary/10 p-6 rounded-full ring-4 ring-primary/5">
-                    <UsersIcon className="w-16 h-16 text-primary" />
-                </div>
-                <div className="max-w-md space-y-2">
-                    <h1 className="text-3xl font-bold">Multiple Staff Accounts</h1>
-                    <p className="text-lg text-muted-foreground">
-                        Scale your operations by adding staff members, assigning roles, and tracking individual performance.
-                    </p>
-                </div>
-
-                <Card className="w-full max-w-sm border-2 border-primary/20 shadow-xl bg-card/50 backdrop-blur">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Pro Plan Feature</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <ul className="text-sm text-left space-y-3 mb-4">
-                            <li className="flex items-center gap-3">
-                                <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center">
-                                    <span className="text-green-600 text-xs font-bold">✓</span>
-                                </div>
-                                <span className="font-medium">Unlimited Staff Members</span>
-                            </li>
-                            <li className="flex items-center gap-3">
-                                <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center">
-                                    <span className="text-green-600 text-xs font-bold">✓</span>
-                                </div>
-                                <span className="font-medium">Role-Based Access Control</span>
-                            </li>
-                            <li className="flex items-center gap-3">
-                                <div className="h-6 w-6 rounded-full bg-green-500/10 flex items-center justify-center">
-                                    <span className="text-green-600 text-xs font-bold">✓</span>
-                                </div>
-                                <span className="font-medium">Staff Activity Logs</span>
-                            </li>
-                        </ul>
-                        <Button className="w-full shadow-md" size="lg" asChild>
-                            <a href="/pricing">Upgrade to Pro</a>
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
-
-    // Stats
     const activeStaffCount = staff.filter(s => s.is_active).length;
     const adminCount = staff.filter(s => s.role === 'ADMIN').length;
 
-    return (
-        <div className="space-y-8 pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold mb-1">Staff Management</h1>
-                    <p className="text-muted-foreground">Manage your team's access and roles</p>
+    if (!hasPermission('manage_staff')) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="glass-card max-w-md p-10 text-center border-red-500/10 shadow-[0_0_50px_rgba(239,68,68,0.1)]">
+                    <div className="bg-red-500/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+                        <Shield className="w-10 h-10 text-red-500" />
+                    </div>
+                    <h2 className="text-3xl font-black mb-2 text-foreground dark:text-white tracking-tighter">Security Lock</h2>
+                    <p className="text-muted-foreground italic">Administrative privileges are required to manage organizational units.</p>
                 </div>
-                <Button size="lg" onClick={() => { resetForm(); setShowDialog(true); }} className="shadow-lg hover:shadow-xl transition-all">
-                    <Plus className="w-5 h-5 mr-2" />
-                    Add New Staff
+            </div>
+        );
+    }
+
+    if (activePlan === 'STARTER') {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] space-y-10 text-center px-4">
+                <div className="relative">
+                    <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                    <div className="glass shadow-2xl p-10 rounded-[3rem] border-white/10 relative">
+                        <UsersIcon className="w-24 h-24 text-primary" />
+                    </div>
+                </div>
+
+                <div className="max-w-lg space-y-3">
+                    <h1 className="text-5xl font-black tracking-tighter text-foreground dark:text-white font-display">Personnel Grid</h1>
+                    <p className="text-xl text-muted-foreground italic">
+                        Scale your operations by adding staff members and assigning specialized operational roles.
+                    </p>
+                </div>
+
+                <div className="w-full max-w-md glass-card p-10 border-primary/20 bg-primary/5 shadow-2xl rounded-[2.5rem]">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary mb-8 underline decoration-4 underline-offset-8">Standard Feature</h3>
+                    <ul className="space-y-6 mb-10">
+                        <li className="flex items-center gap-4 text-left">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <span className="text-primary text-sm font-black">✓</span>
+                            </div>
+                            <span className="font-bold text-foreground dark:text-white/80">Unlimited Team Members</span>
+                        </li>
+                        <li className="flex items-center gap-4 text-left">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <span className="text-primary text-sm font-black">✓</span>
+                            </div>
+                            <span className="font-bold text-foreground dark:text-white/80">Advanced Permission Control</span>
+                        </li>
+                        <li className="flex items-center gap-4 text-left">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <span className="text-primary text-sm font-black">✓</span>
+                            </div>
+                            <span className="font-bold text-foreground dark:text-white/80">Individual Activity Mapping</span>
+                        </li>
+                    </ul>
+                    <Button className="w-full h-14 text-lg font-black uppercase tracking-widest rounded-2xl shadow-[0_10px_30px_rgba(var(--primary),0.3)] btn-pro-primary" asChild>
+                        <a href="/pricing">Upgrade to Standard</a>
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-10 pb-12">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 className="text-4xl font-black tracking-tighter mb-2 text-foreground dark:text-white font-display">Command Center</h1>
+                    <p className="text-muted-foreground text-lg italic">Strategic team coordination & permission management</p>
+                </div>
+                <Button onClick={() => { resetForm(); setShowDialog(true); }} className="h-14 px-8 rounded-2xl shadow-[0_10px_30px_rgba(var(--primary),0.3)] btn-pro-primary font-black uppercase tracking-widest text-sm">
+                    <Plus className="w-5 h-5 mr-3" />
+                    Onboard Lead
                 </Button>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-primary/5 border-primary/10 shadow-sm">
-                    <CardContent className="p-6 flex items-center gap-4">
-                        <div className="p-3 bg-primary/10 rounded-full">
-                            <UsersIcon className="w-6 h-6 text-primary" />
+                <div className="glass-card p-8 border-white/5 group hover:border-primary/20 transition-all duration-500">
+                    <div className="flex items-center gap-5">
+                        <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 group-hover:scale-110 transition-transform duration-500 shadow-inner">
+                            <UsersIcon className="w-7 h-7 text-primary" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Total Staff</p>
-                            <h3 className="text-2xl font-bold">{staff.length}</h3>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/40 mb-1">Fleet Strength</p>
+                            <h3 className="text-3xl font-black text-foreground dark:text-white font-display tracking-tight">{staff.length} Members</h3>
                         </div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-green-500/5 border-green-500/10 shadow-sm">
-                    <CardContent className="p-6 flex items-center gap-4">
-                        <div className="p-3 bg-green-500/10 rounded-full">
-                            <UserCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground">Active Members</p>
-                            <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">{activeStaffCount}</h3>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-blue-500/5 border-blue-500/10 shadow-sm">
-                    <CardContent className="p-6 flex items-center gap-4">
-                        <div className="p-3 bg-blue-500/10 rounded-full">
-                            <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                </div>
+
+                <div className="glass-card p-8 border-white/5 group hover:border-emerald-500/20 transition-all duration-500">
+                    <div className="flex items-center gap-5">
+                        <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 group-hover:scale-110 transition-transform duration-500 shadow-inner">
+                            <UserCheck className="w-7 h-7 text-emerald-500" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Admins</p>
-                            <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400">{adminCount}</h3>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/40 mb-1">Active Status</p>
+                            <h3 className="text-3xl font-black text-emerald-500 font-display tracking-tight">{activeStaffCount} Online</h3>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
+
+                <div className="glass-card p-8 border-white/5 group hover:border-blue-500/20 transition-all duration-500">
+                    <div className="flex items-center gap-5">
+                        <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20 group-hover:scale-110 transition-transform duration-500 shadow-inner">
+                            <Shield className="w-7 h-7 text-blue-500" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/40 mb-1">Authority Level</p>
+                            <h3 className="text-3xl font-black text-blue-500 font-display tracking-tight">{adminCount} Admins</h3>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* Search */}
-            <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search staff by name or username..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 h-11 bg-background shadow-sm rounded-full"
-                />
+            {/* Search and Filters */}
+            <div className="flex flex-col md:flex-row gap-6 items-center">
+                <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground dark:text-white/20" />
+                    <Input
+                        placeholder="Intercept signal: Name, Username, or ID..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-12 h-14 bg-background/50 backdrop-blur-md shadow-xl rounded-2xl border-white/10 dark:text-white font-bold"
+                    />
+                </div>
+                <div className="flex gap-2 p-1 bg-accent/30 dark:bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10">
+                    <Button variant="ghost" size="icon" className="w-12 h-12 rounded-xl bg-white dark:bg-white/10 shadow-sm"><LayoutGrid className="w-5 h-5 text-primary" /></Button>
+                    <Button variant="ghost" size="icon" className="w-12 h-12 rounded-xl text-muted-foreground"><ListFilter className="w-5 h-5" /></Button>
+                </div>
             </div>
 
             {/* Staff Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredStaff.length === 0 ? (
-                    <div className="col-span-full py-16 text-center bg-muted/20 rounded-xl border border-dashed">
-                        <div className="mx-auto w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mb-4">
-                            <UsersIcon className="w-8 h-8 text-muted-foreground" />
-                        </div>
-                        <h3 className="text-lg font-semibold mb-2">No staff members found</h3>
-                        <p className="text-muted-foreground max-w-sm mx-auto mb-6">
-                            {searchQuery ? "Try adjusting your search terms." : "Get started by adding your first staff member."}
-                        </p>
-                        <Button variant="outline" onClick={() => { resetForm(); setShowDialog(true); }}>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Staff
-                        </Button>
-                    </div>
-                ) : (
-                    filteredStaff.map((staffMember) => (
-                        <Card key={staffMember.id} className="group hover:shadow-md transition-all duration-200 overflow-hidden border-border/60">
-                            <div className={`h-2 w-full ${staffMember.is_active ? 'bg-green-500' : 'bg-muted'}`} />
-                            <CardContent className="p-6">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
-                                            <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                                                {getInitials(staffMember.full_name)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <h3 className="font-semibold text-lg line-clamp-1">{staffMember.full_name}</h3>
-                                            <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                                @{staffMember.username}
-                                                {staffMember.role === 'ADMIN' && (
-                                                    <Shield className="w-3 h-3 text-blue-500 fill-blue-500/20" />
-                                                )}
-                                            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <AnimatePresence mode="popLayout">
+                    {filteredStaff.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="col-span-full py-32 text-center glass-card border-dashed border-2 m-4"
+                        >
+                            <div className="mx-auto w-24 h-24 bg-accent/30 dark:bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                                <UsersIcon className="w-10 h-10 text-muted-foreground opacity-30" />
+                            </div>
+                            <h3 className="text-2xl font-black text-foreground dark:text-white tracking-tighter mb-2">Zero Signals Found</h3>
+                            <p className="text-muted-foreground max-w-xs mx-auto italic mb-8">
+                                {searchQuery ? "No team members matching your current intercept parameters." : "No organizational data found. Initiate onboarding."}
+                            </p>
+                            <Button variant="outline" className="h-12 px-6 rounded-xl border-white/10" onClick={() => { resetForm(); setShowDialog(true); }}>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Begin Onboarding
+                            </Button>
+                        </motion.div>
+                    ) : (
+                        filteredStaff.map((staffMember, index) => (
+                            <motion.div
+                                key={staffMember.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: index * 0.05 }}
+                                className="group relative"
+                            >
+                                <div className="glass-card overflow-hidden hover:border-primary/30 transition-all duration-500">
+                                    <div className={cn(
+                                        "h-2 w-full absolute top-0 left-0",
+                                        staffMember.is_active ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-muted'
+                                    )} />
+                                    <div className="p-8 pt-10">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div className="flex items-center gap-5">
+                                                <div className="relative">
+                                                    <Avatar className="h-20 w-20 border-4 border-background dark:border-white/10 shadow-2xl">
+                                                        <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl font-display">
+                                                            {getInitials(staffMember.full_name)}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    {staffMember.is_active && (
+                                                        <div className="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 rounded-full border-4 border-background dark:border-white/10" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-black text-2xl text-foreground dark:text-white tracking-tighter font-display leading-tight">{staffMember.full_name}</h3>
+                                                    <p className="text-sm font-bold text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                                                        <span className="opacity-40 font-mono">ID</span> @{staffMember.username}
+                                                        {staffMember.role === 'ADMIN' && (
+                                                            <div className="ml-2 w-5 h-5 bg-blue-500/10 rounded-md flex items-center justify-center border border-blue-500/20 inline-flex">
+                                                                <Shield className="w-3 h-3 text-blue-500" />
+                                                            </div>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-white/10 rounded-xl">
+                                                        <MoreVertical className="w-5 h-5" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="glass-card border-white/10 p-2 min-w-[180px]">
+                                                    <DropdownMenuItem onClick={() => openEditDialog(staffMember)} className="h-12 rounded-lg cursor-pointer font-bold">
+                                                        <Edit className="w-4 h-4 mr-3 text-primary" />
+                                                        Profile Override
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleDelete(staffMember.id)}
+                                                        className="h-12 rounded-lg cursor-pointer text-red-500 focus:text-red-500 font-bold"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 mr-3" />
+                                                        Terminate Access
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+
+                                        <div className="space-y-4 pt-4 border-t border-white/5">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground dark:text-white/20">Operational Role</span>
+                                                <div className="px-3 py-1 rounded-lg bg-accent/30 dark:bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest text-foreground dark:text-white">
+                                                    {staffMember.role}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground dark:text-white/20">Network Status</span>
+                                                <div className={cn(
+                                                    "px-3 py-1 rounded-lg border text-[10px] font-black uppercase tracking-widest",
+                                                    staffMember.is_active
+                                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                        : 'bg-muted/10 text-muted-foreground border-white/5'
+                                                )}>
+                                                    {staffMember.is_active ? 'Auth Active' : 'Suspended'}
+                                                </div>
+                                            </div>
+                                            <div className="pt-4 flex items-center justify-between text-[10px] font-bold text-muted-foreground dark:text-white/20 tracking-widest">
+                                                <span className="uppercase">Last Signal</span>
+                                                <span className="font-mono">{staffMember.last_login ? formatDateTime(staffMember.last_login).split(',')[0] : 'NEVER'}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                                                <MoreVertical className="w-4 h-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => openEditDialog(staffMember)}>
-                                                <Edit className="w-4 h-4 mr-2" />
-                                                Edit Details
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() => handleDelete(staffMember.id)}
-                                                className="text-destructive focus:text-destructive"
-                                            >
-                                                <Trash2 className="w-4 h-4 mr-2" />
-                                                Remove Staff
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
                                 </div>
-
-                                <div className="space-y-3 mt-4">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">Role</span>
-                                        <Badge variant="outline" className="uppercase text-xs font-semibold">
-                                            {staffMember.role}
-                                        </Badge>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">Status</span>
-                                        <Badge variant={staffMember.is_active ? 'default' : 'secondary'} className={staffMember.is_active ? 'bg-green-500/15 text-green-700 hover:bg-green-500/25 dark:text-green-400' : ''}>
-                                            {staffMember.is_active ? 'Active' : 'Deactivated'}
-                                        </Badge>
-                                    </div>
-                                    <div className="pt-3 mt-3 border-t text-xs text-muted-foreground flex items-center justify-between">
-                                        <span>Last Login</span>
-                                        <span>{staffMember.last_login ? formatDateTime(staffMember.last_login).split(',')[0] : 'Never'}</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))
-                )}
+                            </motion.div>
+                        ))
+                    )}
+                </AnimatePresence>
             </div>
 
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl">{editingStaff ? 'Edit Profile' : 'New Staff Member'}</DialogTitle>
-                        <DialogDescription>
-                            {editingStaff ? 'Update account details and permissions.' : 'Create a new account for your team member.'}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4 py-2">
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                <DialogContent className="sm:max-w-[425px] glass-card p-0 overflow-hidden border-white/10 ring-0 outline-none">
+                    <div className="bg-primary shadow-[0_0_50px_rgba(var(--primary),0.3)] h-2 w-full absolute top-0 left-0 z-50 transition-all duration-1000 group-hover:h-3" />
+                    <div className="p-8">
+                        <DialogHeader className="mb-8">
+                            <DialogTitle className="text-3xl font-black tracking-tighter font-display text-foreground dark:text-white">
+                                {editingStaff ? 'Intercept & Override' : 'New Tactical Unit'}
+                            </DialogTitle>
+                            <DialogDescription className="text-muted-foreground italic font-medium">
+                                {editingStaff ? 'Modifying unit parameters and operational roles.' : 'Initializing new team member into the grid.'}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleSubmit} className="space-y-6 py-2">
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Signal ID</label>
+                                        <Input
+                                            required
+                                            value={formData.username}
+                                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                            placeholder="jdoe"
+                                            className="h-12 bg-accent/30 dark:bg-white/5 border-white/10 rounded-xl font-bold font-mono"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Authority</label>
+                                        <select
+                                            className="w-full h-12 rounded-xl border border-white/10 bg-accent/30 dark:bg-white/5 px-4 py-2 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 appearance-none"
+                                            value={formData.role}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                        >
+                                            <option value="PACKER" className="bg-background">Packer</option>
+                                            <option value="ADMIN" className="bg-background">Admin</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Username</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Full Name</label>
                                     <Input
                                         required
-                                        value={formData.username}
-                                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                        placeholder="jdoe"
-                                        className="bg-muted/30"
+                                        value={formData.full_name}
+                                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                        placeholder="John Doe"
+                                        className="h-12 bg-accent/30 dark:bg-white/5 border-white/10 rounded-xl font-bold"
                                     />
                                 </div>
+
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Role</label>
-                                    <select
-                                        className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                        value={formData.role}
-                                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                    >
-                                        <option value="PACKER">Packer</option>
-                                        <option value="ADMIN">Admin</option>
-                                    </select>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1 flex items-center justify-between">
+                                        Access Key
+                                        {!editingStaff && <span className="text-primary">*</span>}
+                                    </label>
+                                    <div className="relative">
+                                        <Key className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground/50 font-black" />
+                                        <Input
+                                            type="password"
+                                            required={!editingStaff}
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            placeholder={editingStaff ? "Leave blank to keep current" : "Encryption required"}
+                                            className="pl-11 h-12 bg-accent/30 dark:bg-white/5 border-white/10 rounded-xl font-bold"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-accent/30 dark:bg-white/5 group/toggle cursor-pointer transition-all hover:bg-accent/50" onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}>
+                                    <div className={cn(
+                                        "w-12 h-6 rounded-full p-1 transition-all duration-500",
+                                        formData.is_active ? 'bg-emerald-500' : 'bg-muted'
+                                    )}>
+                                        <div className={cn(
+                                            "w-4 h-4 rounded-full bg-white shadow-lg transition-all duration-500",
+                                            formData.is_active ? 'translate-x-6' : 'translate-x-0'
+                                        )} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="text-xs font-black uppercase tracking-widest cursor-pointer select-none text-foreground dark:text-white/80">
+                                            Operational Status
+                                        </label>
+                                    </div>
+                                    <Badge className={cn(
+                                        "px-3 py-1 font-black",
+                                        formData.is_active ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'
+                                    )}>
+                                        {formData.is_active ? 'Ready' : 'Locked'}
+                                    </Badge>
                                 </div>
                             </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Full Name</label>
-                                <Input
-                                    required
-                                    value={formData.full_name}
-                                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                    placeholder="John Doe"
-                                    className="bg-muted/30"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium flex items-center justify-between">
-                                    Password
-                                    {!editingStaff && <span className="text-destructive">*</span>}
-                                </label>
-                                <div className="relative">
-                                    <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                    <Input
-                                        type="password"
-                                        required={!editingStaff}
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        placeholder={editingStaff ? "Leave blank to keep current" : "Set secure password"}
-                                        className="pl-9 bg-muted/30"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/20">
-                                <input
-                                    type="checkbox"
-                                    id="is_active"
-                                    checked={formData.is_active}
-                                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                                    className="w-4 h-4 rounded text-primary focus:ring-primary"
-                                />
-                                <label htmlFor="is_active" className="text-sm font-medium cursor-pointer select-none flex-1">
-                                    Account Active
-                                </label>
-                                <Badge variant={formData.is_active ? 'outline' : 'destructive'}>
-                                    {formData.is_active ? 'Enabled' : 'Disabled'}
-                                </Badge>
-                            </div>
-                        </div>
-                        <DialogFooter className="pt-4">
-                            <Button type="button" variant="ghost" onClick={() => setShowDialog(false)}>
-                                Cancel
-                            </Button>
-                            <Button type="submit" className="min-w-[100px]">
-                                {editingStaff ? 'Save Changes' : 'Create Account'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
+                            <DialogFooter className="pt-6 gap-3">
+                                <Button type="button" variant="ghost" onClick={() => setShowDialog(false)} className="h-12 px-6 font-bold hover:bg-white/5 rounded-xl">
+                                    Abort
+                                </Button>
+                                <Button type="submit" className="h-12 px-8 font-black uppercase tracking-widest text-xs rounded-xl shadow-[0_10px_30px_rgba(var(--primary),0.2)] btn-pro-primary flex-1">
+                                    {editingStaff ? 'Override Profile' : 'Authorize Lead'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
     );
-}
+};
+
+export default Staff;

@@ -127,7 +127,7 @@ export default function Dashboard() {
         <div className="space-y-8 pb-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight mb-2 text-white font-display">Dashboard</h1>
+                    <h1 className="text-4xl font-bold tracking-tight mb-2 text-foreground dark:text-white font-display">Dashboard</h1>
                     <p className="text-muted-foreground text-lg italic">Overview of your warehouse operations</p>
                 </div>
                 <div className="flex gap-2">
@@ -155,8 +155,8 @@ export default function Dashboard() {
                         <div className={cn("h-full card-pro group", stat.borderColor)}>
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">{stat.title}</p>
-                                    <h3 className="text-3xl font-bold tracking-tight mb-1 text-white">{stat.value}</h3>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground dark:text-white/40 mb-2">{stat.title}</p>
+                                    <h3 className="text-3xl font-bold tracking-tight mb-1 text-foreground dark:text-white">{stat.value}</h3>
                                     <p className={`text-[10px] ${stat.color} font-bold uppercase tracking-wider flex items-center gap-2`}>
                                         <TrendingUp className="w-3 h-3" /> {stat.subtitle}
                                     </p>
@@ -173,7 +173,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Recent Orders - Takes up 2 columns */}
                 <div className="lg:col-span-2 space-y-6">
-                    <Card className="border-border/50 shadow-sm overflow-hidden h-full">
+                    <Card className="border-border/50 dark:border-white/5 bg-card/30 backdrop-blur-md shadow-sm overflow-hidden h-full">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                             <div>
                                 <CardTitle className="text-xl">Recent Orders</CardTitle>
@@ -253,10 +253,10 @@ export default function Dashboard() {
                                 whileTap={isTrialExpired ? {} : { scale: 0.98 }}
                                 onClick={action.action}
                                 className={cn(
-                                    "flex flex-col items-center justify-center p-4 rounded-xl border bg-card transition-all group text-center h-32 shadow-sm relative",
+                                    "flex flex-col items-center justify-center p-4 rounded-xl border bg-card/30 backdrop-blur-md transition-all group text-center h-32 shadow-sm relative",
                                     isTrialExpired
                                         ? "opacity-60 cursor-not-allowed border-dashed"
-                                        : "hover:border-primary/50 hover:bg-primary/5 shadow-sm"
+                                        : "hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 shadow-sm"
                                 )}
                             >
                                 <div className={`w-10 h-10 rounded-full ${action.bg} ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>

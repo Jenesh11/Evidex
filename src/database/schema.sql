@@ -175,7 +175,3 @@ CREATE TABLE IF NOT EXISTS inventory_movements (
 
 CREATE INDEX IF NOT EXISTS idx_inventory_movements_product ON inventory_movements(product_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_movements_created ON inventory_movements(created_at);
-
--- Plan settings
-INSERT OR IGNORE INTO settings (key, value) VALUES ('current_plan', 'PRO');
-INSERT OR IGNORE INTO settings (key, value) VALUES ('plan_activated_at', datetime('now'));

@@ -25,12 +25,17 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --radius: 1rem;
+    --radius: 1.25rem;
 
     /* Brand Specifics */
     --brand-deep: 224 71% 12%;
     --brand-blue: 221.2 83.2% 53.3%;
     --brand-accent: 199 89% 48%;
+
+    /* Glass Effects */
+    --glass-bg: 255 255% 255% / 0.4;
+    --glass-border: 255 255% 255% / 0.5;
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
   }
 
   .dark {
@@ -53,6 +58,11 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+
+    /* Glass Effects Dark */
+    --glass-bg: 0 0% 0% / 0.2;
+    --glass-border: 255 255% 255% / 0.1;
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
 }
 
@@ -111,15 +121,23 @@
   }
 
   .glass {
-    @apply bg-white/[0.03] backdrop-blur-2xl border border-white/10 shadow-2xl;
+    background: rgba(var(--glass-bg));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(var(--glass-border));
+    box-shadow: var(--glass-shadow);
   }
 
   .glass-card {
-    @apply bg-white/[0.02] backdrop-blur-xl border border-white/5 shadow-xl rounded-3xl p-6 hover:border-white/10 transition-all duration-500;
+    @apply glass rounded-3xl p-6 transition-all duration-500 hover:border-primary/20;
   }
 
   .card-pro {
-    @apply bg-card/50 backdrop-blur-md border border-border/40 shadow-sm rounded-2xl p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-500;
+    @apply glass rounded-2xl p-6 transition-all duration-500 hover:border-primary/30;
+  }
+
+  .glass-floating {
+    @apply glass rounded-3xl shadow-2xl border-white/10 dark:border-white/5;
   }
 
   .btn-pro {

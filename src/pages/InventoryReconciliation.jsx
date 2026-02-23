@@ -1,422 +1,366 @@
-import React, { useState, useEffect } from 'react';
-import { Scale, AlertTriangle, Check, X, Search, CheckCircle, ClipboardCheck, ArrowRight, RotateCcw } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import React, { useEffect, useState } from 'react';
+import {
+    Search,
+    Save,
+    RefreshCcw,
+    AlertCircle,
+    CheckCircle2,
+    ArrowRightLeft,
+    Package,
+    History,
+    ShieldAlert,
+    ChevronRight,
+    SearchX,
+    ClipboardCheck,
+    Box
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
+import { formatDateTime, cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import toast from '@/hooks/useToast';
-import { hasFeature, PLANS } from '@/config/plans';
-import { UpgradePrompt } from '@/components/UpgradePrompt';
-import { Textarea } from '@/components/ui/textarea';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const RECONCILIATION_REASONS = [
-    'Physical count mismatch',
-    'Damaged goods',
-    'Theft/Loss',
-    'System error',
-    'Supplier error',
-    'Return processing',
-    'Other'
-];
-
-export default function InventoryReconciliation() {
-    const { user, profile, effectivePlan } = useAuth();
-    const [products, setProducts] = useState([]);
-    const [filteredProducts, setFilteredProducts] = useState([]);
+const InventoryReconciliation = () => {
+    const { hasPermission, activePlan } = useAuth();
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [physicalCounts, setPhysicalCounts] = useState({});
-    const [selectedProducts, setSelectedProducts] = useState(new Set());
-    const [reason, setReason] = useState('');
-    const [notes, setNotes] = useState('');
-    const [isReconciling, setIsReconciling] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [reconcileData, setReconcileData] = useState({
+        actual_quantity: '',
+        reason: '',
+        notes: ''
+    });
 
-    const currentPlan = effectivePlan === 'PRO' ? PLANS.PRO :
-        effectivePlan === 'ENTERPRISE' ? PLANS.ENTERPRISE : PLANS.STARTER;
+    const searchProduct = async (query) => {
+        if (!query.trim()) {
+            setSearchResults([]);
+            return;
+        }
 
-    const loadProducts = async () => {
         try {
-            const data = await window.electronAPI.inventory.getAll();
-            setProducts(data);
-            setFilteredProducts(data);
+            setLoading(true);
+            const results = await window.electronAPI.products.getAll();
+            const filtered = results.filter(p =>
+                p.sku.toLowerCase().includes(query.toLowerCase()) ||
+                p.name.toLowerCase().includes(query.toLowerCase())
+            );
+            setSearchResults(filtered);
         } catch (error) {
-            console.error('Error loading products:', error);
-        }
-    };
-
-    useEffect(() => {
-        loadProducts();
-    }, []);
-
-    // Filter products when search changes
-    useEffect(() => {
-        if (!searchQuery) {
-            setFilteredProducts(products);
-        } else {
-            const query = searchQuery.toLowerCase();
-            setFilteredProducts(products.filter(p =>
-                p.name.toLowerCase().includes(query) ||
-                p.sku.toLowerCase().includes(query)
-            ));
-        }
-    }, [searchQuery, products]);
-
-    const calculateDifference = (productId) => {
-        const product = products.find(p => p.id === productId);
-        if (!product) return 0;
-        const physical = parseInt(physicalCounts[productId]) || 0;
-        return physical - product.quantity;
-    };
-
-    const handlePhysicalCountChange = (productId, value) => {
-        // Allow empty string for better UX while typing
-        const numericValue = value === '' ? '' : parseInt(value);
-
-        setPhysicalCounts(prev => ({
-            ...prev,
-            [productId]: numericValue
-        }));
-
-        // Auto-select based on logic
-        const product = products.find(p => p.id === productId);
-        // Treat empty/NaN as 0 for diff calculation but don't force it in the UI input yet
-        const physical = value === '' ? 0 : (parseInt(value) || 0);
-        const diff = physical - product.quantity;
-
-        if (diff !== 0) {
-            setSelectedProducts(prev => new Set([...prev, productId]));
-        } else {
-            // Optional: Auto-deselect if diff is 0? 
-            // Better to keep selected if user manually selected it, but for auto-flow let's be smart
-            setSelectedProducts(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(productId);
-                return newSet;
-            });
-        }
-    };
-
-    const toggleProductSelection = (productId) => {
-        setSelectedProducts(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(productId)) {
-                newSet.delete(productId);
-            } else {
-                newSet.add(productId);
-            }
-            return newSet;
-        });
-    };
-
-    const handleReconcile = async () => {
-        try {
-            // Validate permissions
-            if (!['ADMIN', 'MANAGER'].includes(user?.role)) {
-                toast.error('Access denied - insufficient permissions');
-                return;
-            }
-
-            // Validate selections
-            if (selectedProducts.size === 0) {
-                toast.warning('Please select products to reconcile');
-                return;
-            }
-
-            // Validate reason
-            if (!reason) {
-                toast.warning('Please select a reason for reconciliation');
-                return;
-            }
-
-            setIsReconciling(true);
-
-            // Create reconciliation movements
-            const movements = Array.from(selectedProducts).map(productId => {
-                const diff = calculateDifference(productId);
-                const product = products.find(p => p.id === productId);
-
-                return {
-                    product_id: productId,
-                    quantity: Math.abs(diff),
-                    direction: diff > 0 ? 'IN' : 'OUT',
-                    reason: 'RECONCILIATION',
-                    notes: `${reason}${notes ? ': ' + notes : ''} (System: ${product.quantity}, Physical: ${physicalCounts[productId] || 0})`,
-                    performed_by: user.id
-                };
-            }).filter(m => m.quantity > 0); // Only include non-zero differences
-
-            if (movements.length === 0) {
-                toast.info('No differences to reconcile');
-                setIsReconciling(false);
-                return;
-            }
-
-            await window.electronAPI.inventory.reconcile(movements);
-
-            toast.success(`Reconciliation completed successfully for ${movements.length} product(s)`);
-
-            // Reset form
-            setPhysicalCounts({});
-            setSelectedProducts(new Set());
-            setReason('');
-            setNotes('');
-
-            // Reload products
-            loadProducts();
-        } catch (error) {
-            console.error('Error reconciling inventory:', error);
-            toast.error(`Failed to reconcile inventory: ${error.message}`);
+            console.error('Search failed:', error);
         } finally {
-            setIsReconciling(false);
+            setLoading(false);
         }
     };
 
-    const getDifferenceColor = (diff) => {
-        if (diff === 0) return 'text-muted-foreground';
-        if (diff > 0) return 'text-green-600 dark:text-green-400 font-bold';
-        return 'text-red-600 dark:text-red-400 font-bold';
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchQuery) searchProduct(searchQuery);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const handleReconcile = async (e) => {
+        e.preventDefault();
+        if (!selectedProduct) return;
+
+        try {
+            setLoading(true);
+            await window.electronAPI.inventory.reconcile({
+                product_id: selectedProduct.id,
+                actual_quantity: parseInt(reconcileData.actual_quantity),
+                reason: reconcileData.reason,
+                notes: reconcileData.notes
+            });
+
+            toast({
+                title: "Reconciliation Logged",
+                description: `System state updated for ${selectedProduct.name}`,
+            });
+
+            setSelectedProduct(null);
+            setReconcileData({ actual_quantity: '', reason: '', notes: '' });
+            setSearchQuery('');
+        } catch (error) {
+            toast({
+                title: "Protocol Error",
+                description: "Failed to commit reconciliation data",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const getDifferenceIcon = (diff) => {
-        if (diff === 0) return <CheckCircle className="w-4 h-4 text-muted-foreground/30" />;
-        if (diff > 0) return <ClipboardCheck className="w-4 h-4 text-green-500" />;
-        return <AlertTriangle className="w-4 h-4 text-red-500" />;
-    };
-
-    // Check if user has permission
-    const userRole = profile?.role || user?.role;
-    if (!['ADMIN', 'MANAGER'].includes(userRole)) {
+    if (!hasPermission('reconcile_inventory')) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <Card className="max-w-md border-destructive/20 bg-destructive/5">
-                    <CardHeader className="text-center">
-                        <div className="mx-auto bg-destructive/10 p-3 rounded-full w-fit mb-2">
-                            <Scale className="w-6 h-6 text-destructive" />
-                        </div>
-                        <CardTitle className="text-destructive">Access Denied</CardTitle>
-                        <CardDescription>Only ADMIN and MANAGER roles can access Inventory Reconciliation.</CardDescription>
-                    </CardHeader>
-                </Card>
+            <div className="flex items-center justify-center h-full">
+                <div className="glass-card max-w-md p-10 text-center border-red-500/10 shadow-[0_0_50px_rgba(239,68,68,0.1)]">
+                    <div className="bg-red-500/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+                        <ShieldAlert className="w-10 h-10 text-red-500" />
+                    </div>
+                    <h2 className="text-3xl font-black mb-2 text-foreground dark:text-white tracking-tighter">Access Inhibited</h2>
+                    <p className="text-muted-foreground italic">Elevated authorization is required for inventory State-Sync operations.</p>
+                </div>
             </div>
         );
     }
 
-    // Check if plan has access to reconciliation
-    if (!hasFeature(currentPlan, 'inventory_reconciliation')) {
+    if (activePlan === 'STARTER') {
         return (
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold mb-2">Inventory Reconciliation</h1>
-                    <p className="text-muted-foreground">Correct stock mismatches through physical count</p>
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] space-y-10 text-center px-4">
+                <div className="relative">
+                    <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                    <div className="glass shadow-2xl p-10 rounded-[3rem] border-white/10 relative">
+                        <ArrowRightLeft className="w-24 h-24 text-primary" />
+                    </div>
                 </div>
-                <UpgradePrompt
-                    feature="Inventory Reconciliation"
-                    requiredPlan="PRO"
-                    description="Upgrade to Pro to reconcile inventory discrepancies and maintain accurate stock levels."
-                />
+
+                <div className="max-w-lg space-y-3">
+                    <h1 className="text-5xl font-black tracking-tighter text-foreground dark:text-white font-display">State-Sync Intelligence</h1>
+                    <p className="text-xl text-muted-foreground italic">
+                        Align physical stock levels with digital records using high-precision audit tools.
+                    </p>
+                </div>
+
+                <div className="w-full max-w-md glass-card p-10 border-primary/20 bg-primary/5 shadow-2xl rounded-[2.5rem]">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-primary mb-8 underline decoration-4 underline-offset-8">Advanced Tier Feature</h3>
+                    <ul className="space-y-6 mb-10">
+                        <li className="flex items-center gap-4 text-left">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <span className="text-primary text-sm font-black">✓</span>
+                            </div>
+                            <span className="font-bold text-foreground dark:text-white/80">Real-time Quantity Logic</span>
+                        </li>
+                        <li className="flex items-center gap-4 text-left">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <span className="text-primary text-sm font-black">✓</span>
+                            </div>
+                            <span className="font-bold text-foreground dark:text-white/80">Loss Prevention Auditing</span>
+                        </li>
+                        <li className="flex items-center gap-4 text-left">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                                <span className="text-primary text-sm font-black">✓</span>
+                            </div>
+                            <span className="font-bold text-foreground dark:text-white/80">Discrepancy Signal Mapping</span>
+                        </li>
+                    </ul>
+                    <Button className="w-full h-14 text-lg font-black uppercase tracking-widest rounded-2xl shadow-[0_10px_30px_rgba(var(--primary),0.3)] btn-pro-primary" asChild>
+                        <a href="/pricing">Upgrade to Standard</a>
+                    </Button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6 pb-20 md:pb-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-10 pb-12 max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold mb-1">Inventory Reconciliation</h1>
-                    <p className="text-muted-foreground">Sync your physical inventory with system records</p>
+                    <h1 className="text-4xl font-black tracking-tighter mb-1 text-foreground dark:text-white font-display">State-Sync</h1>
+                    <p className="text-muted-foreground text-lg italic">High-precision inventory auditing & reconciliation</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => {
-                        setPhysicalCounts({});
-                        setSelectedProducts(new Set());
-                        setReason('');
-                        setNotes('');
-                        setSearchQuery('');
-                    }}>
-                        <RotateCcw className="w-4 h-4 mr-2" />
-                        Reset Form
+                <div className="flex gap-3">
+                    <Button variant="outline" className="h-12 px-6 rounded-2xl border-white/10 dark:text-white/60 font-bold gap-3 hover:bg-white/5">
+                        <History className="w-5 h-5" />
+                        Audit Log
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column: Product List */}
-                <div className="lg:col-span-2 space-y-4">
-                    <Card className="h-full flex flex-col shadow-sm">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <Search className="w-5 h-5 text-primary" />
-                                Find Products
-                            </CardTitle>
-                            <CardDescription>Search and enter physical counts for products</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-1 flex flex-col gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+                {/* Search and Selection Area */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="glass-card p-8 border-white/5 space-y-8">
+                        <div>
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-4">Signal Intercept</h3>
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground dark:text-white/20" />
                                 <Input
-                                    placeholder="Search by name or SKU..."
+                                    placeholder="Enter SKU or Product Name..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-9 bg-muted/30 focus:bg-background transition-all"
+                                    className="pl-12 h-14 bg-accent/30 dark:bg-white/5 shadow-xl rounded-2xl border-white/10 dark:text-white font-bold"
                                 />
                             </div>
+                        </div>
 
-                            <div className="border rounded-xl bg-card overflow-hidden flex-1 min-h-[400px]">
-                                <Table>
-                                    <TableHeader className="bg-muted/50 sticky top-0 z-10">
-                                        <TableRow>
-                                            <TableHead className="w-[40px]"></TableHead>
-                                            <TableHead>Product Details</TableHead>
-                                            <TableHead className="text-right w-[100px]">System</TableHead>
-                                            <TableHead className="text-right w-[120px]">Physical</TableHead>
-                                            <TableHead className="text-right w-[100px]">Diff</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredProducts.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={5} className="h-64 text-center">
-                                                    <div className="flex flex-col items-center justify-center space-y-3 opacity-80">
-                                                        <div className="p-4 rounded-full bg-muted/50">
-                                                            <clipboardCheck className="w-10 h-10 text-muted-foreground" />
-                                                            {/* Standard Lucide icon fallback if ClipboardCheck fails? No it is valid */}
-                                                            <Scale className="w-10 h-10 text-muted-foreground" />
-                                                        </div>
-                                                        <div className="text-lg font-medium">No products found</div>
-                                                        <p className="text-sm text-muted-foreground">Try adjusting your search criteria</p>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            filteredProducts.map((product) => {
-                                                const diff = calculateDifference(product.id);
-                                                const isSelected = selectedProducts.has(product.id);
-                                                const physicalCountValue = physicalCounts[product.id];
-                                                // Handle 0 vs empty
-                                                const displayValue = physicalCountValue === undefined ? '' : physicalCountValue;
-
-                                                return (
-                                                    <TableRow
-                                                        key={product.id}
-                                                        className={`transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-muted/30'}`}
-                                                    >
-                                                        <TableCell className="align-middle">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isSelected}
-                                                                onChange={() => toggleProductSelection(product.id)}
-                                                                // disabled={diff === 0} // Allow selecting even if 0? No, usually only reconcile diffs. But let's keep logic simple
-                                                                disabled={diff === 0}
-                                                                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-30"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div className="flex flex-col py-1">
-                                                                <span className="font-medium text-sm">{product.name}</span>
-                                                                <span className="text-xs text-muted-foreground font-mono">{product.sku}</span>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-right font-mono text-sm">
-                                                            <Badge variant="secondary" className="font-normal">
-                                                                {product.quantity}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            <Input
-                                                                type="number"
-                                                                min="0"
-                                                                value={displayValue}
-                                                                onChange={(e) => handlePhysicalCountChange(product.id, e.target.value)}
-                                                                placeholder="-"
-                                                                className={`w-20 text-right h-8 ml-auto ${displayValue !== '' ? 'border-primary' : ''}`}
-                                                                disabled={isReconciling}
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            <div className="flex items-center justify-end gap-2">
-                                                                <span className={`font-mono font-bold text-sm ${getDifferenceColor(diff)}`}>
-                                                                    {diff > 0 ? '+' : ''}{diff !== 0 ? diff : '-'}
-                                                                </span>
-                                                                {diff !== 0 && getDifferenceIcon(diff)}
-                                                            </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })
-                                        )}
-                                    </TableBody>
-                                </Table>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between px-1">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Results Found</span>
+                                <Badge variant="outline" className="border-white/10 text-[10px] uppercase font-black">{searchResults.length}</Badge>
                             </div>
-                        </CardContent>
-                    </Card>
+
+                            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                <AnimatePresence mode="popLayout">
+                                    {searchResults.length > 0 ? (
+                                        searchResults.map((p, index) => (
+                                            <motion.div
+                                                key={p.id}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: index * 0.03 }}
+                                                className={cn(
+                                                    "group p-4 rounded-xl border border-white/5 cursor-pointer transition-all duration-300",
+                                                    selectedProduct?.id === p.id
+                                                        ? "bg-primary/10 border-primary/30 ring-1 ring-primary/20 shadow-[0_0_20px_rgba(var(--primary),0.1)]"
+                                                        : "hover:bg-white/5 hover:border-white/10"
+                                                )}
+                                                onClick={() => setSelectedProduct(p)}
+                                            >
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="font-black text-foreground dark:text-white font-display text-lg tracking-tight line-clamp-1">{p.name}</span>
+                                                    <ChevronRight className={cn(
+                                                        "w-4 h-4 transition-transform duration-300",
+                                                        selectedProduct?.id === p.id ? "rotate-90 text-primary" : "text-muted-foreground/30"
+                                                    )} />
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku}</span>
+                                                    <span className="text-[10px] font-black bg-accent/30 dark:bg-white/5 px-2 py-0.5 rounded-md text-foreground dark:text-white/60">
+                                                        {p.quantity} Unit{p.quantity !== 1 ? 's' : ''}
+                                                    </span>
+                                                </div>
+                                            </motion.div>
+                                        ))
+                                    ) : searchQuery && !loading ? (
+                                        <div className="py-12 text-center">
+                                            <SearchX className="w-10 h-10 text-muted-foreground/20 mx-auto mb-4" />
+                                            <p className="text-xs font-bold text-muted-foreground italic">No signals matching "{searchQuery}"</p>
+                                        </div>
+                                    ) : !searchQuery ? (
+                                        <div className="py-12 text-center">
+                                            <Box className="w-10 h-10 text-muted-foreground/10 mx-auto mb-4" />
+                                            <p className="text-xs font-bold text-muted-foreground/30 italic">Initialize search for Audit</p>
+                                        </div>
+                                    ) : null}
+                                </AnimatePresence>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Right Column: Actions */}
-                <div className="lg:col-span-1 space-y-6">
-                    <Card className="shadow-sm border-l-4 border-l-primary/50 sticky top-6">
-                        <CardHeader className="bg-muted/10 pb-4">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <ClipboardCheck className="w-5 h-5 text-primary" />
-                                Review & Submit
-                            </CardTitle>
-                            <CardDescription>
-                                Finalize inventory adjustments
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-6 space-y-5">
-                            <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-                                <div className="text-sm text-muted-foreground mb-1">Products Selected</div>
-                                <div className="text-3xl font-bold text-primary">{selectedProducts.size}</div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <label className="text-sm font-medium">Reconciliation Reason <span className="text-destructive">*</span></label>
-                                <select
-                                    value={reason}
-                                    onChange={(e) => setReason(e.target.value)}
-                                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-                                >
-                                    <option value="">Select a reason...</option>
-                                    {RECONCILIATION_REASONS.map(r => (
-                                        <option key={r} value={r}>{r}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="space-y-3">
-                                <label className="text-sm font-medium">Additional Notes</label>
-                                <Textarea
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="Add any relevant details or Reference IDs..."
-                                    className="resize-none h-24 bg-background"
-                                />
-                            </div>
-                        </CardContent>
-                        <CardFooter className="bg-muted/10 pt-4 pb-4 border-t flex-col gap-3">
-                            <Button
-                                onClick={handleReconcile}
-                                disabled={isReconciling || selectedProducts.size === 0 || !reason}
-                                className="w-full text-base font-semibold shadow-md hover:shadow-lg transition-all"
-                                size="lg"
+                {/* Reconciliation Form Area */}
+                <div className="lg:col-span-3">
+                    <AnimatePresence mode="wait">
+                        {selectedProduct ? (
+                            <motion.div
+                                key="form"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                className="glass-card overflow-hidden"
                             >
-                                {isReconciling ? (
-                                    <>Processing...</>
-                                ) : (
-                                    <>
-                                        Reconcile Inventory
-                                        <ArrowRight className="w-4 h-4 ml-2" />
-                                    </>
-                                )}
-                            </Button>
-                            <p className="text-xs text-center text-muted-foreground px-4">
-                                This action will update inventory counts and log a reconciliation event.
-                            </p>
-                        </CardFooter>
-                    </Card>
+                                <div className="h-2 w-full bg-primary shadow-[0_0_30px_rgba(var(--primary),0.3)]" />
+                                <div className="p-10">
+                                    <div className="flex items-center gap-6 mb-12">
+                                        <div className="w-20 h-20 rounded-[2rem] bg-primary/10 border border-primary/20 flex items-center justify-center shadow-inner">
+                                            <ClipboardCheck className="w-10 h-10 text-primary" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-3xl font-black text-foreground dark:text-white font-display tracking-tighter leading-none mb-2">{selectedProduct.name}</h2>
+                                            <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase tracking-[0.2em] text-[10px] px-3">
+                                                Active Audit Session
+                                            </Badge>
+                                        </div>
+                                    </div>
+
+                                    <form onSubmit={handleReconcile} className="space-y-10">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Physical Count</label>
+                                                <div className="relative">
+                                                    <Input
+                                                        type="number"
+                                                        required
+                                                        placeholder="0"
+                                                        value={reconcileData.actual_quantity}
+                                                        onChange={(e) => setReconcileData({ ...reconcileData, actual_quantity: e.target.value })}
+                                                        className="h-20 text-4xl font-black text-center bg-accent/30 dark:bg-white/5 border-white/10 rounded-3xl font-display"
+                                                    />
+                                                    <div className="absolute top-1/2 -translate-y-1/2 right-6 px-3 py-1 bg-primary/10 border border-primary/20 rounded-lg">
+                                                        <span className="text-[10px] font-black text-primary uppercase">Units</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-between px-2 pt-2">
+                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase">System Balance:</span>
+                                                    <span className="text-sm font-black text-foreground dark:text-white font-mono">{selectedProduct.quantity} Units</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Reconciliation Reason</label>
+                                                <select
+                                                    required
+                                                    className="w-full h-20 rounded-3xl border border-white/10 bg-accent/30 dark:bg-white/5 px-6 py-2 text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 appearance-none"
+                                                    value={reconcileData.reason}
+                                                    onChange={(e) => setReconcileData({ ...reconcileData, reason: e.target.value })}
+                                                >
+                                                    <option value="" disabled className="bg-background">Select Protocol...</option>
+                                                    <option value="PHYSICAL_COUNT" className="bg-background">Cycle Count Audit</option>
+                                                    <option value="DAMAGE" className="bg-background">Damaged / Liquidation</option>
+                                                    <option value="RETURN" className="bg-background">Signal Return Adjustment</option>
+                                                    <option value="OTHER" className="bg-background">Custom Override</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Audit Notes</label>
+                                            <textarea
+                                                className="w-full min-h-[140px] rounded-3xl border border-white/10 bg-accent/30 dark:bg-white/5 p-6 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 resize-none transition-all focus:bg-accent/50"
+                                                placeholder="Provide detailed context for this State-Sync event..."
+                                                value={reconcileData.notes}
+                                                onChange={(e) => setReconcileData({ ...reconcileData, notes: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="pt-6 flex gap-4">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                onClick={() => setSelectedProduct(null)}
+                                                className="h-14 px-8 font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-white/5"
+                                                disabled={loading}
+                                            >
+                                                Abort Session
+                                            </Button>
+                                            <Button
+                                                type="submit"
+                                                className="h-14 px-10 flex-1 font-black uppercase tracking-widest text-sm rounded-2xl shadow-[0_15px_40px_rgba(var(--primary),0.3)] btn-pro-primary"
+                                                disabled={loading}
+                                            >
+                                                {loading ? <RefreshCcw className="w-5 h-5 animate-spin mr-3" /> : <Save className="w-5 h-5 mr-3" />}
+                                                Commit State-Sync
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="placeholder"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="h-full min-h-[500px] border-2 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center p-12 text-center"
+                            >
+                                <div className="w-32 h-32 rounded-full bg-accent/30 dark:bg-white/5 flex items-center justify-center mb-8 shadow-inner border border-white/5">
+                                    <ClipboardCheck className="w-12 h-12 text-muted-foreground/30" />
+                                </div>
+                                <h3 className="text-3xl font-black text-foreground dark:text-white tracking-tighter mb-4">No Unit Selected</h3>
+                                <p className="text-muted-foreground max-w-sm mx-auto italic text-lg">
+                                    Select a product signal from the left intercept panel to initiate a synchronization session.
+                                </p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </div>
     );
-}
+};
+
+export default InventoryReconciliation;

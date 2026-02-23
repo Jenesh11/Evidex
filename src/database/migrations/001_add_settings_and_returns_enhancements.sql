@@ -11,6 +11,8 @@ INSERT OR IGNORE INTO settings (key, value) VALUES ('camera_device_id', 'default
 INSERT OR IGNORE INTO settings (key, value) VALUES ('camera_resolution', '1280x720');
 INSERT OR IGNORE INTO settings (key, value) VALUES ('camera_framerate', '30');
 INSERT OR IGNORE INTO settings (key, value) VALUES ('storage_location', 'default');
+INSERT OR IGNORE INTO settings (key, value) VALUES ('current_plan', 'PRO');
+INSERT OR IGNORE INTO settings (key, value) VALUES ('plan_activated_at', CURRENT_TIMESTAMP);
 
 -- Add return_reason column to returns table if not exists
 ALTER TABLE returns ADD COLUMN return_reason TEXT;

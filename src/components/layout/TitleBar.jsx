@@ -16,12 +16,12 @@ export default function TitleBar() {
 
     return (
         <div
-            className="h-8 bg-card border-b border-border/30 flex items-center justify-center relative select-none"
+            className="h-8 bg-transparent flex items-center justify-center relative select-none"
             style={{ WebkitAppRegion: 'drag' }}
         >
             {/* Centered Title */}
             <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none">
-                <span className="text-sm font-semibold text-foreground">EvidEx</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40 dark:text-white/20">EvidEx Management</span>
             </div>
 
             {/* Window Controls */}

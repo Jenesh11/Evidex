@@ -297,8 +297,8 @@ export default function Orders() {
         <div className="space-y-8 pb-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight mb-2 text-white font-display">Orders</h1>
-                    <p className="text-muted-foreground text-lg">Track and manage customer transactions with precision</p>
+                    <h1 className="text-4xl font-bold tracking-tight mb-2 text-foreground dark:text-white font-display">Orders</h1>
+                    <p className="text-muted-foreground text-lg italic">Track and manage customer transactions with precision</p>
                 </div>
                 <Button size="lg" onClick={() => { resetForm(); setShowDialog(true); }} className="btn-pro-primary h-12 px-8">
                     <Plus className="w-5 h-5 mr-2" />
@@ -306,69 +306,71 @@ export default function Orders() {
                 </Button>
             </div>
 
-            <div className="card-pro border-white/5 p-8">
-                <div className="flex items-center gap-6 mb-8">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
-                        <Input
-                            placeholder="Search orders by number, customer..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-12 h-14 bg-white/5 border-white/10 text-white focus:border-primary/50 focus:ring-primary/20 rounded-2xl text-lg px-6"
-                        />
+            <Card className="border-border/50 dark:border-white/5 bg-card/30 backdrop-blur-md shadow-sm overflow-hidden">
+                <CardContent className="p-8">
+                    <div className="flex items-center gap-6 mb-8">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground dark:text-white/40" />
+                            <Input
+                                placeholder="Search orders by number, customer..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-12 h-14 bg-background/50 dark:bg-white/5 border-border/50 dark:border-white/10 text-foreground dark:text-white focus:border-primary/50 focus:ring-primary/20 rounded-2xl text-lg px-6"
+                            />
+                        </div>
                     </div>
-                </div>
 
-                <div className="rounded-[2rem] border border-white/5 overflow-hidden bg-white/[0.02]">
-                    <Table>
-                        <TableHeader className="bg-white/5">
-                            <TableRow className="hover:bg-transparent border-white/5 px-4 h-16">
-                                <TableHead className="w-[200px] text-white/40 font-bold uppercase tracking-widest text-[10px] pl-8">Order ID</TableHead>
-                                <TableHead className="text-white/40 font-bold uppercase tracking-widest text-[10px]">Customer</TableHead>
-                                <TableHead className="text-white/40 font-bold uppercase tracking-widest text-[10px]">Date & Time</TableHead>
-                                <TableHead className="text-right text-white/40 font-bold uppercase tracking-widest text-[10px]">Total Amount</TableHead>
-                                <TableHead className="w-[180px] text-white/40 font-bold uppercase tracking-widest text-[10px]">Current Status</TableHead>
-                                <TableHead className="w-[100px] text-right text-white/40 font-bold uppercase tracking-widest text-[10px] pr-8">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredOrders.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-16">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                                                <Search className="w-6 h-6 text-muted-foreground" />
-                                            </div>
-                                            <p className="text-muted-foreground font-medium">No orders found</p>
-                                        </div>
-                                    </TableCell>
+                    <div className="rounded-[2rem] border border-border/50 dark:border-white/5 overflow-hidden bg-background/30 dark:bg-white/[0.02]">
+                        <Table>
+                            <TableHeader className="bg-accent/50 dark:bg-white/5">
+                                <TableRow className="hover:bg-transparent border-border/50 dark:border-white/5 px-4 h-16">
+                                    <TableHead className="w-[200px] text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px] pl-8">Order ID</TableHead>
+                                    <TableHead className="text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">Customer</TableHead>
+                                    <TableHead className="text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">Date & Time</TableHead>
+                                    <TableHead className="text-right text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">Total Amount</TableHead>
+                                    <TableHead className="w-[180px] text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">Current Status</TableHead>
+                                    <TableHead className="w-[100px] text-right text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px] pr-8">Actions</TableHead>
                                 </TableRow>
-                            ) : (
-                                filteredOrders.map((order) => (
-                                    <TableRow key={order.id} className="group hover:bg-muted/40 transition-colors cursor-pointer" onClick={() => viewOrderDetails(order.id)}>
-                                        <TableCell className="font-mono font-medium text-primary group-hover:text-primary/80 transition-colors">
-                                            {order.order_number}
-                                        </TableCell>
-                                        <TableCell className="font-medium">{order.customer_name}</TableCell>
-                                        <TableCell className="text-muted-foreground text-sm">{formatDateTime(order.created_at)}</TableCell>
-                                        <TableCell className="text-right font-mono font-medium">{formatCurrency(order.total_amount)}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className={`${getStatusColor(order.status)} border-0 px-3 py-1`}>
-                                                {getStatusLabel(order.status)}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                            </Button>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredOrders.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center py-16">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                                    <Search className="w-6 h-6 text-muted-foreground" />
+                                                </div>
+                                                <p className="text-muted-foreground font-medium">No orders found</p>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-            </div>
+                                ) : (
+                                    filteredOrders.map((order) => (
+                                        <TableRow key={order.id} className="group hover:bg-accent/40 dark:hover:bg-muted/40 transition-colors cursor-pointer border-border/50 dark:border-white/5" onClick={() => viewOrderDetails(order.id)}>
+                                            <TableCell className="font-mono font-medium text-primary group-hover:text-primary/80 transition-colors">
+                                                {order.order_number}
+                                            </TableCell>
+                                            <TableCell className="font-medium">{order.customer_name}</TableCell>
+                                            <TableCell className="text-muted-foreground text-sm">{formatDateTime(order.created_at)}</TableCell>
+                                            <TableCell className="text-right font-mono font-medium">{formatCurrency(order.total_amount)}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className={`${getStatusColor(order.status)} border-0 px-3 py-1`}>
+                                                    {getStatusLabel(order.status)}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Create Order Dialog */}
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -670,6 +672,6 @@ export default function Orders() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div >
+        </div>
     );
 }

@@ -89,21 +89,21 @@ export default function Header() {
     const statusInfo = getStatusText();
 
     return (
-        <header className="h-16 border-b border-white/5 glass px-6 flex items-center justify-between shadow-sm relative z-10">
+        <header className="h-16 glass-floating px-6 flex items-center justify-between shadow-sm relative z-10">
             <div>
-                <h2 className="text-lg font-bold font-display text-white">Welcome, {user?.email?.split('@')[0] || 'User'}</h2>
-                <p className="text-[10px] text-primary/80 font-bold uppercase tracking-widest">{profile?.role || 'Role'}</p>
+                <h2 className="text-lg font-bold font-display text-foreground dark:text-white">Welcome, {user?.email?.split('@')[0] || 'User'}</h2>
+                <p className="text-[10px] text-primary font-black uppercase tracking-widest">{profile?.role || 'Role'}</p>
             </div>
 
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white/60 hover:text-white hover:bg-white/5">
+                <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground dark:text-white/60 dark:hover:text-white hover:bg-accent/50 dark:hover:bg-white/5 rounded-xl">
                     {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </Button>
 
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-4 bg-border/50 dark:bg-white/10" />
 
                 {/* Plan Badge */}
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shadow-inner ${getPlanBadgeStyle()}`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider shadow-inner ${getPlanBadgeStyle()}`}>
                     <Crown className="w-3 h-3" />
                     {PLAN_FEATURES[effectivePlan || currentPlan]?.name || 'Pro'}
                 </div>
@@ -111,7 +111,7 @@ export default function Header() {
                 {/* User Account Dropdown */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="sm" className="flex items-center gap-2 bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-full px-4">
+                        <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent border-border/50 dark:border-white/10 text-foreground dark:text-white hover:bg-accent/50 dark:hover:bg-white/10 rounded-full px-4">
                             <User className="w-3.5 h-3.5" />
                             <span className="text-xs font-bold uppercase tracking-wider">{user?.email?.split('@')[0] || 'Account'}</span>
                         </Button>

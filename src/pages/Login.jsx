@@ -73,33 +73,33 @@ export default function Login() {
                     >
                         <Logo className="w-24 h-24 drop-shadow-[0_0_30px_rgba(59,130,246,0.3)]" />
                     </motion.div>
-                    <h1 className="text-5xl font-black mb-3 tracking-tighter text-white font-display">EvidEx</h1>
-                    <p className="text-primary/80 font-bold uppercase tracking-[0.3em] text-[10px]">Shield Protection System</p>
+                    <h1 className="text-5xl font-black mb-3 tracking-tighter text-foreground dark:text-white font-display">EvidEx</h1>
+                    <p className="text-primary font-black uppercase tracking-[0.3em] text-[10px]">Shield Protection System</p>
                 </div>
 
                 <div className="glass border-white/10 rounded-[2.5rem] overflow-hidden shadow-3xl">
                     <div className="p-8 md:p-10">
                         <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-white mb-2 font-display">
+                            <h2 className="text-2xl font-bold text-foreground dark:text-white mb-2 font-display">
                                 {isSignUp ? 'Create Account' : 'Welcome Back'}
                             </h2>
-                            <p className="text-white/60 text-sm">
+                            <p className="text-muted-foreground dark:text-white/60 text-sm">
                                 {isSignUp ? 'Start your protection journey' : 'Securely sign in to your dashboard'}
                             </p>
                         </div>
 
-                        <div className="flex bg-white/5 p-1 rounded-2xl mb-8 border border-white/5">
+                        <div className="flex bg-accent/50 dark:bg-white/5 p-1 rounded-2xl mb-8 border border-border/50 dark:border-white/5">
                             <button
                                 type="button"
                                 onClick={() => setLoginType('admin')}
-                                className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all duration-300 ${loginType === 'admin' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-white/40 hover:text-white'}`}
+                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${loginType === 'admin' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-muted-foreground dark:text-white/40 hover:text-foreground dark:hover:text-white'}`}
                             >
                                 Admin
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setLoginType('staff')}
-                                className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all duration-300 ${loginType === 'staff' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-white/40 hover:text-white'}`}
+                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${loginType === 'staff' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-muted-foreground dark:text-white/40 hover:text-foreground dark:hover:text-white'}`}
                             >
                                 Staff
                             </button>
@@ -109,7 +109,7 @@ export default function Login() {
                             <>
                                 <Button
                                     variant="outline"
-                                    className="w-full h-14 mb-8 bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-2xl gap-3 font-semibold transition-all duration-300 active:scale-95"
+                                    className="w-full h-14 mb-8 bg-transparent border-border dark:border-white/10 text-foreground dark:text-white hover:bg-accent/50 dark:hover:bg-white/10 rounded-2xl gap-3 font-semibold transition-all duration-300 active:scale-95"
                                     onClick={handleGoogleLogin}
                                     disabled={loading}
                                 >
@@ -123,31 +123,31 @@ export default function Login() {
                                 </Button>
 
                                 <div className="relative mb-8">
-                                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
-                                    <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em] font-bold"><span className="bg-[#0c1015] px-3 text-white/30">Secure Mail</span></div>
+                                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border/50 dark:border-white/5" /></div>
+                                    <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em] font-black"><span className="bg-background dark:bg-[#0c1015] px-3 text-muted-foreground dark:text-white/30">Secure Mail</span></div>
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-5">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Email</label>
+                                        <label className="text-xs font-black uppercase tracking-widest text-muted-foreground dark:text-white/40 ml-1">Email Address</label>
                                         <Input
                                             type="email"
                                             placeholder="name@company.com"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
-                                            className="h-14 bg-white/5 border-white/10 text-white focus:border-primary/50 focus:ring-primary/20 rounded-2xl px-5"
+                                            className="h-14 bg-background/50 dark:bg-white/5 border-border/50 dark:border-white/10 text-foreground dark:text-white focus:border-primary/50 focus:ring-primary/20 rounded-2xl px-5"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Password</label>
+                                        <label className="text-xs font-black uppercase tracking-widest text-muted-foreground dark:text-white/40 ml-1">Password</label>
                                         <Input
                                             type="password"
                                             placeholder="••••••••"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             required
-                                            className="h-14 bg-white/5 border-white/10 text-white focus:border-primary/50 focus:ring-primary/20 rounded-2xl px-5"
+                                            className="h-14 bg-background/50 dark:bg-white/5 border-border/50 dark:border-white/10 text-foreground dark:text-white focus:border-primary/50 focus:ring-primary/20 rounded-2xl px-5"
                                         />
                                     </div>
 
@@ -218,7 +218,7 @@ export default function Login() {
                     </div>
                 </div>
 
-                <p className="mt-10 text-center text-white/20 text-[10px] font-bold uppercase tracking-[0.4em]">
+                <p className="mt-10 text-center text-muted-foreground/30 dark:text-white/20 text-[10px] font-black uppercase tracking-[0.4em]">
                     Enterprise Shield Encryption Active
                 </p>
             </motion.div>

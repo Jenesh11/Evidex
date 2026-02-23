@@ -20,28 +20,29 @@ import { Button } from '@/components/ui/button';
 import { hasFeature, PLANS } from '@/config/plans';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 // Improved Bar Chart Component
 const SimpleBarChart = ({ data, maxValue, color = "bg-primary" }) => (
-    <div className="space-y-4">
+    <div className="space-y-6">
         {data.map((item, index) => (
             <motion.div
                 key={index}
-                className="space-y-1.5"
+                className="space-y-2"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
             >
-                <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium truncate max-w-[180px]">{item.label}</span>
-                    <span className="text-muted-foreground">{item.count}</span>
+                <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest px-1">
+                    <span className="text-muted-foreground dark:text-white/40 truncate max-w-[200px]">{item.label}</span>
+                    <span className="text-foreground dark:text-white">{item.count}</span>
                 </div>
-                <div className="h-2.5 w-full bg-secondary/50 rounded-full overflow-hidden">
+                <div className="h-3 w-full bg-accent/30 dark:bg-white/5 rounded-full overflow-hidden border border-border/20 dark:border-white/5 p-[2px]">
                     <motion.div
-                        className={`h-full ${color} rounded-full`}
+                        className={`h-full ${color} rounded-full shadow-[0_0_15px_rgba(var(--primary),0.3)]`}
                         initial={{ width: 0 }}
                         animate={{ width: `${(item.value / maxValue) * 100}%` }}
-                        transition={{ duration: 1, ease: "easeOut" }}
+                        transition={{ duration: 1, ease: "circOut" }}
                     />
                 </div>
             </motion.div>
@@ -51,28 +52,26 @@ const SimpleBarChart = ({ data, maxValue, color = "bg-primary" }) => (
 
 // Enhanced Metric Card Component
 const MetricCard = ({ title, value, subtitle, icon: Icon, color, bgColor, trend }) => (
-    <Card className="overflow-hidden hover:shadow-md transition-all duration-200">
-        <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-sm font-medium text-muted-foreground">{title}</p>
-                    <h3 className="text-3xl font-bold mt-2">{value}</h3>
-                </div>
-                <div className={`p - 3 rounded - xl ${bgColor} `}>
-                    <Icon className={`w - 6 h - 6 ${color} `} />
-                </div>
+    <div className="glass-card p-6 border-white/5 group hover:border-primary/20 transition-all duration-500">
+        <div className="flex items-start justify-between">
+            <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-white/40 mb-1">{title}</p>
+                <h3 className="text-4xl font-black text-foreground dark:text-white tracking-tighter font-display">{value}</h3>
             </div>
-            <div className="mt-4 flex items-center text-xs">
-                {trend && (
-                    <span className={`flex items - center font - medium ${trend > 0 ? 'text-red-500' : 'text-green-500'} mr - 2`}>
-                        {trend > 0 ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
-                        {Math.abs(trend)}%
-                    </span>
-                )}
-                <span className="text-muted-foreground">{subtitle}</span>
+            <div className={`p-4 rounded-2xl ${bgColor} backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform duration-500`}>
+                <Icon className={`w-6 h-6 ${color}`} />
             </div>
-        </CardContent>
-    </Card>
+        </div>
+        <div className="mt-6 flex items-center text-[10px] font-bold uppercase tracking-widest px-1">
+            {trend && (
+                <span className={`flex items-center font-black ${trend > 0 ? 'text-red-500' : 'text-emerald-500'} mr-3 py-1 px-2 rounded-lg bg-current/5 border border-current/10`}>
+                    {trend > 0 ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
+                    {Math.abs(trend)}%
+                </span>
+            )}
+            <span className="text-muted-foreground dark:text-white/30 italic">{subtitle}</span>
+        </div>
+    </div>
 );
 
 export default function Analytics() {
@@ -100,10 +99,10 @@ export default function Analytics() {
         try {
             setLoading(true);
 
-            // Load all data
-            const orders = await window.electronAPI.orders.getAll();
-            const returns = await window.electronAPI.returns.getAll();
-            const products = await window.electronAPI.products.getAll();
+            // Load all data with fallback for empty/undefined
+            const orders = (await window.electronAPI.orders.getAll()) || [];
+            const returns = (await window.electronAPI.returns.getAll()) || [];
+            const products = (await window.electronAPI.products.getAll()) || [];
 
             // Calculate basic metrics
             const totalOrders = orders.length;
@@ -155,25 +154,42 @@ export default function Analytics() {
 
         // Count total orders per product
         orders.forEach(order => {
-            // Get order items for this order
-            const orderItems = order.items || [];
-            orderItems.forEach(item => {
-                if (productMap[item.product_id]) {
-                    productMap[item.product_id].totalOrders++;
-                }
-            });
+            // Get order items for this order - handle both stringified JSON and objects
+            let orderItems = [];
+            try {
+                orderItems = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+            } catch (e) {
+                console.warn('Failed to parse order items:', e, order.id);
+            }
+
+            if (Array.isArray(orderItems)) {
+                orderItems.forEach(item => {
+                    if (item && item.product_id && productMap[item.product_id]) {
+                        productMap[item.product_id].totalOrders++;
+                    }
+                });
+            }
         });
 
         // Count RTOs per product
-        const rtoReturns = returns.filter(r => r.return_type === 'RTO');
+        const rtoReturns = returns.filter(r => r && r.return_type === 'RTO');
         rtoReturns.forEach(rto => {
             const order = orders.find(o => o.id === rto.order_id);
-            if (order && order.items) {
-                order.items.forEach(item => {
-                    if (productMap[item.product_id]) {
-                        productMap[item.product_id].rtoCount++;
-                    }
-                });
+            if (order) {
+                let orderItems = [];
+                try {
+                    orderItems = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+                } catch (e) {
+                    console.warn('Failed to parse order items for RTO:', e, order.id);
+                }
+
+                if (Array.isArray(orderItems)) {
+                    orderItems.forEach(item => {
+                        if (item && item.product_id && productMap[item.product_id]) {
+                            productMap[item.product_id].rtoCount++;
+                        }
+                    });
+                }
             }
         });
 
@@ -277,58 +293,57 @@ export default function Analytics() {
     const maxReasonPercentage = Math.max(...reasonBreakdown.map(r => r.value), 1);
 
     return (
-        <div className="space-y-8 pb-12">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-10 pb-12">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold mb-1">RTO Analytics</h1>
-                    <p className="text-muted-foreground">Insights into returns and delivery performance</p>
+                    <h1 className="text-4xl font-black tracking-tighter mb-2 text-foreground dark:text-white font-display">Intelligence</h1>
+                    <p className="text-muted-foreground text-lg italic">Advanced delivery performance & RTO risk mapping</p>
                 </div>
-                <Button variant="outline" className="gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Last 30 Days
+                <Button variant="outline" className="h-12 px-6 rounded-2xl border-white/10 dark:text-white/60 dark:hover:text-white hover:bg-white/5 transition-all font-bold gap-3">
+                    <Calendar className="w-5 h-5" />
+                    Archive: Last 30 Days
                 </Button>
             </div>
 
-            {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                     <MetricCard
-                        title="Total Orders"
+                        title="Global Orders"
                         value={metrics.totalOrders}
                         icon={Package}
-                        subtitle="All time orders"
+                        subtitle="System wide total"
                         color="text-blue-500"
                         bgColor="bg-blue-500/10"
                     />
                 </motion.div>
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                     <MetricCard
-                        title="Total Returns"
+                        title="Returned"
                         value={metrics.totalReturns}
                         icon={RotateCcw}
-                        subtitle="Customer returns"
+                        subtitle="Customer initiated"
                         color="text-orange-500"
                         bgColor="bg-orange-500/10"
                     />
                 </motion.div>
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                     <MetricCard
-                        title="RTO Count"
+                        title="RTO Incidents"
                         value={metrics.rtoCount}
                         icon={TrendingDown}
-                        subtitle="Return to origin"
+                        subtitle="Delivery failure"
                         color="text-red-500"
                         bgColor="bg-red-500/10"
                     />
                 </motion.div>
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                     <MetricCard
-                        title="Return Rate"
-                        value={`${metrics.returnRate.toFixed(1)}% `}
+                        title="Health Index"
+                        value={`${metrics.returnRate.toFixed(1)}%`}
                         icon={BarChart3}
-                        subtitle="Overall rate"
-                        color={metrics.returnRate < 10 ? "text-green-500" : "text-red-500"}
-                        bgColor={metrics.returnRate < 10 ? "bg-green-500/10" : "bg-red-500/10"}
+                        subtitle="Operational efficiency"
+                        color={metrics.returnRate < 10 ? "text-emerald-500" : "text-red-500"}
+                        bgColor={metrics.returnRate < 10 ? "bg-emerald-500/10" : "bg-red-500/10"}
                     />
                 </motion.div>
             </div>
@@ -336,51 +351,51 @@ export default function Analytics() {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* RTO % by Product */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-                    <Card className="h-full">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
+                <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
+                    <div className="glass-card overflow-hidden">
+                        <div className="p-8 border-b border-white/5">
+                            <h2 className="flex items-center gap-3 text-xl font-bold font-display text-foreground dark:text-white">
                                 <AlertCircle className="w-5 h-5 text-primary" />
-                                Highest RTO Products
-                            </CardTitle>
-                            <CardDescription>Top 5 products with highest return rates</CardDescription>
-                        </CardHeader>
-                        <CardContent>
+                                Critical Risk Mapping
+                            </h2>
+                            <p className="text-sm text-muted-foreground mt-1">High-impact return patterns by product</p>
+                        </div>
+                        <div className="p-8">
                             {productRTOData.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-                                    <Package className="w-12 h-12 mb-3 bg-muted/50 p-2 rounded-full" />
-                                    <p>No product return data available</p>
+                                <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground italic">
+                                    <Package className="w-16 h-16 mb-4 opacity-10" />
+                                    <p>Insufficient data for risk mapping</p>
                                 </div>
                             ) : (
                                 <SimpleBarChart
                                     data={productRTOData.map(p => ({
                                         label: p.name,
                                         value: p.rtoPercentage,
-                                        count: `${p.rtoPercentage.toFixed(1)}% `
+                                        count: `${p.rtoPercentage.toFixed(1)}%`
                                     }))}
                                     maxValue={maxRTOPercentage}
                                     color="bg-primary"
                                 />
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </motion.div>
 
                 {/* Return Reason Breakdown */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-                    <Card className="h-full">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-primary" />
-                                Return Reasons
-                            </CardTitle>
-                            <CardDescription>Understanding why returns happen</CardDescription>
-                        </CardHeader>
-                        <CardContent>
+                <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
+                    <div className="glass-card overflow-hidden">
+                        <div className="p-8 border-b border-white/5">
+                            <h2 className="flex items-center gap-3 text-xl font-bold font-display text-foreground dark:text-white">
+                                <FileText className="w-5 h-5 text-orange-500" />
+                                Root Cause Vectors
+                            </h2>
+                            <p className="text-sm text-muted-foreground mt-1">Causation analysis for non-delivery</p>
+                        </div>
+                        <div className="p-8">
                             {reasonBreakdown.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-                                    <RotateCcw className="w-12 h-12 mb-3 bg-muted/50 p-2 rounded-full" />
-                                    <p>No return reasons logged</p>
+                                <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground italic">
+                                    <RotateCcw className="w-16 h-16 mb-4 opacity-10" />
+                                    <p>Vector profiles pending ingestion</p>
                                 </div>
                             ) : (
                                 <SimpleBarChart
@@ -389,59 +404,58 @@ export default function Analytics() {
                                     color="bg-orange-500"
                                 />
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </motion.div>
             </div>
 
-            {/* Detailed Tables */}
-            <div className="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Product Risk Analysis</CardTitle>
-                        <CardDescription>Detailed breakdown of RTO metrics by product</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="rounded-md border">
+            <div className="space-y-10">
+                <div className="glass-card overflow-hidden">
+                    <div className="p-8 border-b border-white/5">
+                        <h2 className="text-2xl font-bold font-display text-foreground dark:text-white tracking-tight">Active Protection Ledger</h2>
+                        <p className="text-muted-foreground italic mt-1">Real-time SKU performance & RTO risk levels</p>
+                    </div>
+                    <div className="p-8">
+                        <div className="rounded-[2rem] border border-border/50 dark:border-white/5 overflow-hidden bg-background/30 dark:bg-white/[0.02]">
                             <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                        <TableHead>Product Name</TableHead>
-                                        <TableHead className="text-right">Total Orders</TableHead>
-                                        <TableHead className="text-right">RTO Count</TableHead>
-                                        <TableHead className="text-right">RTO Rate</TableHead>
-                                        <TableHead>Risk Level</TableHead>
+                                <TableHeader className="bg-accent/50 dark:bg-white/5">
+                                    <TableRow className="hover:bg-transparent border-border/50 dark:border-white/5 h-16">
+                                        <TableHead className="text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px] pl-8">SKU Identifier</TableHead>
+                                        <TableHead className="text-right text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">Orders</TableHead>
+                                        <TableHead className="text-right text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">RTO</TableHead>
+                                        <TableHead className="text-right text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">Rate</TableHead>
+                                        <TableHead className="text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px] pr-8">Risk Matrix</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {productRTOData.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                                No data available
+                                            <TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic">
+                                                No SKU data encountered in current session
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         productRTOData.map((product) => (
-                                            <TableRow key={product.id}>
-                                                <TableCell className="font-medium">{product.name}</TableCell>
-                                                <TableCell className="text-right">{product.totalOrders}</TableCell>
-                                                <TableCell className="text-right">{product.rtoCount}</TableCell>
-                                                <TableCell className="text-right font-mono">
+                                            <TableRow key={product.id} className="group hover:bg-white/5 transition-all duration-300 border-border/50 dark:border-white/5 h-20">
+                                                <TableCell className="font-bold text-lg text-foreground dark:text-white pl-8 font-display">{product.name}</TableCell>
+                                                <TableCell className="text-right font-black text-muted-foreground dark:text-white/60">{product.totalOrders}</TableCell>
+                                                <TableCell className="text-right font-black text-red-400">{product.rtoCount}</TableCell>
+                                                <TableCell className="text-right font-black font-mono text-primary bg-primary/5 px-4 rounded-xl inline-flex h-10 items-center justify-center m-4">
                                                     {product.rtoPercentage.toFixed(1)}%
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="pr-8">
                                                     {product.rtoPercentage > 20 ? (
-                                                        <Badge variant="destructive" className="items-center gap-1">
-                                                            <TrendingUp className="w-3 h-3" /> High Risk
-                                                        </Badge>
+                                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+                                                            <TrendingUp className="w-3 h-3" /> High Risk Vector
+                                                        </div>
                                                     ) : product.rtoPercentage > 10 ? (
-                                                        <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/20 border-yellow-500/20">
-                                                            <AlertCircle className="w-3 h-3 mr-1" /> Medium Risk
-                                                        </Badge>
+                                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                                            <AlertCircle className="w-3 h-3" /> Elevated Threat
+                                                        </div>
                                                     ) : (
-                                                        <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500/20">
-                                                            <TrendingDown className="w-3 h-3 mr-1" /> Low Risk
-                                                        </Badge>
+                                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                                                            <TrendingDown className="w-3 h-3" /> Minimum Impact
+                                                        </div>
                                                     )}
                                                 </TableCell>
                                             </TableRow>
@@ -450,49 +464,53 @@ export default function Analytics() {
                                 </TableBody>
                             </Table>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
-                {/* Courier Performance Analysis */}
                 {hasFeature(currentPlan, 'courier_analytics') && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Courier Performance</CardTitle>
-                            <CardDescription>Delivery partner efficiency ranking</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="rounded-md border">
+                    <div className="glass-card overflow-hidden">
+                        <div className="p-8 border-b border-white/5">
+                            <h2 className="text-2xl font-bold font-display text-foreground dark:text-white tracking-tight">Logistics Network Integrity</h2>
+                            <p className="text-muted-foreground italic mt-1">Delivery partner efficiency & attrition ranking</p>
+                        </div>
+                        <div className="p-8">
+                            <div className="rounded-[2rem] border border-border/50 dark:border-white/5 overflow-hidden bg-background/30 dark:bg-white/[0.02]">
                                 <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                            <TableHead>Courier Name</TableHead>
-                                            <TableHead className="text-right">Total Orders</TableHead>
-                                            <TableHead className="text-right">RTO Count</TableHead>
-                                            <TableHead className="text-right">RTO Rate</TableHead>
-                                            <TableHead>Performance</TableHead>
+                                    <TableHeader className="bg-accent/50 dark:bg-white/5">
+                                        <TableRow className="hover:bg-transparent border-border/50 dark:border-white/5 h-16">
+                                            <TableHead className="text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px] pl-8">Carrier Entity</TableHead>
+                                            <TableHead className="text-right text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">Volume</TableHead>
+                                            <TableHead className="text-right text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">Return Vector</TableHead>
+                                            <TableHead className="text-right text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px]">Failure Rate</TableHead>
+                                            <TableHead className="text-muted-foreground dark:text-white/40 font-black uppercase tracking-widest text-[10px] pr-8">Trust Profile</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {courierStats.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                                    No courier data available
+                                                <TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic">
+                                                    Infrastructure data pending synchronization
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
                                             courierStats.map((courier, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell className="font-medium">{courier.name}</TableCell>
-                                                    <TableCell className="text-right">{courier.totalOrders}</TableCell>
-                                                    <TableCell className="text-right">{courier.rtoCount}</TableCell>
-                                                    <TableCell className="text-right font-mono">
+                                                <TableRow key={index} className="group hover:bg-white/5 transition-all duration-300 border-border/50 dark:border-white/5 h-20">
+                                                    <TableCell className="font-bold text-lg text-foreground dark:text-white pl-8 font-display">{courier.name}</TableCell>
+                                                    <TableCell className="text-right font-black text-muted-foreground dark:text-white/60">{courier.totalOrders}</TableCell>
+                                                    <TableCell className="text-right font-black text-red-400">{courier.rtoCount}</TableCell>
+                                                    <TableCell className="text-right font-black font-mono text-primary bg-primary/5 px-4 rounded-xl inline-flex h-10 items-center justify-center m-4">
                                                         {courier.rtoPercentage.toFixed(1)}%
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Badge className={`border ${getRTOBadgeColor(courier.rtoPercentage)} `}>
-                                                            {courier.rtoPercentage < 5 ? 'Excellent' :
-                                                                courier.rtoPercentage < 15 ? 'Good' : 'Needs Attention'}
-                                                        </Badge>
+                                                    <TableCell className="pr-8">
+                                                        <div className={cn(
+                                                            "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-inner",
+                                                            courier.rtoPercentage < 5 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                                                                courier.rtoPercentage < 15 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                                                                    "bg-red-500/10 text-red-400 border-red-500/20"
+                                                        )}>
+                                                            {courier.rtoPercentage < 5 ? 'Elite Access' :
+                                                                courier.rtoPercentage < 15 ? 'Verified' : 'High Variance'}
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))
@@ -500,8 +518,8 @@ export default function Analytics() {
                                     </TableBody>
                                 </Table>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

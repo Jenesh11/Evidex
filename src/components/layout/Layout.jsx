@@ -40,11 +40,12 @@ export default function Layout() {
         <div className="flex flex-col h-screen bg-brand-mesh overflow-hidden relative">
             <div className="noise-overlay" />
             <TitleBar />
-            <div className="flex flex-1 overflow-hidden">
+
+            <div className="flex flex-1 overflow-hidden p-4 gap-4">
                 <Sidebar />
-                <div className="flex-1 flex flex-col overflow-hidden relative">
+                <div className="flex-1 flex flex-col overflow-hidden gap-4">
                     <Header />
-                    <main className="flex-1 overflow-y-auto p-6 relative">
+                    <main className="flex-1 overflow-y-auto relative rounded-[2.5rem] glass-card p-8 border-white/5">
                         {shouldBlock ? (
                             <TrialExpiredOverlay />
                         ) : (
